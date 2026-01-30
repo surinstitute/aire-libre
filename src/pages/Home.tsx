@@ -33,7 +33,7 @@ export default function Home() {
           textAlign: 'center'
         }}>
           <h1 style={{ fontSize: '30px', fontWeight: 'bold', margin: 0 }}>
-            Pájaros de Ciudad
+            Aire Libre
           </h1>
         </div>
 
