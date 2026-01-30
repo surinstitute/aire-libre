@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
+import logoSur from '../assets/Logo_SUR25.svg';
 
 // Lazy load para que solo se cargue en Home
 const Bird3DCanvas = lazy(() => import('../components/Bird/Bird3DCanvas'));
@@ -52,7 +53,7 @@ export default function Home() {
               height: '400px'
             }}>
               <Suspense fallback={<div style={{ width: '100%', height: '400px' }}></div>}>
-                <Bird3DCanvas modelPath="/src/assets/models/birb.glb" />
+                <Bird3DCanvas modelPath="/models/birb.glb" />
               </Suspense>
             </div>
             
@@ -92,19 +93,18 @@ export default function Home() {
                 
                 <button
                   onClick={() => {
-                    // Forzar recarga completa para limpiar WebGL
                     window.location.href = '/map';
                   }}
                   style={{
-                  backgroundColor: '#fbbf24',
-                  color: '#111827',
-                  fontWeight: 'bold',
-                  padding: '16px 32px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                    backgroundColor: '#fbbf24',
+                    color: '#111827',
+                    fontWeight: 'bold',
+                    padding: '16px 32px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                   }}
                 >
                   Explorar mapa
@@ -120,13 +120,16 @@ export default function Home() {
           padding: '24px',
           display: 'flex',
           justifyContent: 'center',
+          alignItems: 'center',
           gap: '32px',
           borderTop: '1px solid #e5e7eb',
           flexWrap: 'wrap'
         }}>
-          <div style={{ color: '#4b5563', fontWeight: '600' }}>
-            Instituto del Sur Urbano
-          </div>
+          <img 
+            src={logoSur} 
+            alt="Instituto del Sur Urbano" 
+            style={{ height: '40px' }}
+          />
           <div style={{ color: '#4b5563', fontWeight: '600' }}>
             Breathe Cities
           </div>
