@@ -3,9 +3,6 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Colonia } from '../../types';
 
-// Importar los GeoJSON
-import cdmxAlcaldias from '../../data/cdmx_alcaldias_limites.json';
-
 interface MapViewProps {
   colonias: Colonia[];
   onColoniaClick?: (colonia: Colonia) => void;
@@ -16,15 +13,14 @@ interface MapViewProps {
 const TILESET_ID = 'loungelizard7.bcqgjoe8';
 const SOURCE_LAYER = 'codigos_postales-43psgh';
 
-// Colores
+// Colores más opacos/suaves
 const COLORS = {
   bajo: '#86efac',
-  medio: '#fde68a',
+  medio: '#fcd34d',
   alto: '#fca5a5',
   default: '#9ca3af',
   border: '#1f2937',
-  borderHover: '#000000',
-  alcaldiasBorder: '#64748b'  // Gris para límites de alcaldías
+  borderHover: '#000000'
 };
 
 function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
@@ -74,12 +70,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
         promoteId: 'codigo_postal'
       });
 
-      // Fuente de límites de alcaldías
-      map.current!.addSource('cdmx-alcaldias', {
-        type: 'geojson',
-        data: cdmxAlcaldias as GeoJSON.FeatureCollection
-      });
-
       setMapReady(true);
     });
 
@@ -97,7 +87,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
   useEffect(() => {
     if (!mapReady || !map.current || colonias.length === 0) return;
 
-    const layersToRemove = ['polygons-fill', 'polygons-outline-hover', 'points-circle', 'cdmx-alcaldias-line'];
+    const layersToRemove = ['polygons-fill', 'polygons-outline-hover', 'points-circle'];
     layersToRemove.forEach(layer => {
       if (map.current!.getLayer(layer)) {
         map.current!.removeLayer(layer);
@@ -149,25 +139,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
           0
         ],
         'line-opacity': 1
-      }
-    });
-
-    // === LÍMITES DE ALCALDÍAS ===
-    map.current.addLayer({
-      id: 'cdmx-alcaldias-line',
-      type: 'line',
-      source: 'cdmx-alcaldias',
-      paint: {
-        'line-color': COLORS.alcaldiasBorder,
-        'line-width': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          8, 0.5,
-          12, 1,
-          16, 1.5
-        ],
-        'line-opacity': 0.6
       }
     });
 
@@ -338,13 +309,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
           <LegendItem color={COLORS.bajo} label="Bajo" />
           <LegendItem color={COLORS.medio} label="Medio" />
           <LegendItem color={COLORS.alto} label="Alto" />
-        </div>
-        
-        <div style={{ borderTop: '1px solid #e5e7eb', marginTop: '12px', paddingTop: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '20px', height: '1px', backgroundColor: COLORS.alcaldiasBorder }} />
-            <span style={{ color: '#374151', fontSize: '12px' }}>Alcaldías</span>
-          </div>
         </div>
       </div>
 
