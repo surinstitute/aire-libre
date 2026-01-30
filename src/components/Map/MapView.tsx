@@ -18,9 +18,9 @@ const SOURCE_LAYER = 'codigos_postales-43psgh';
 
 // Colores
 const COLORS = {
-  bajo: '#22c55e',
-  medio: '#f59e0b',
-  alto: '#ef4444',
+  bajo: '#a7f3d0',
+  medio: '#fde68a',
+  alto: '#fecaca',
   default: '#9ca3af',
   border: '#1f2937',
   borderHover: '#000000',
