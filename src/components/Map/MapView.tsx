@@ -4,7 +4,6 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Colonia } from '../../types';
 
 // Importar los GeoJSON
-import cdmxPerimetro from '../../data/cdmx_perimetro.json';
 import cdmxAlcaldias from '../../data/cdmx_alcaldias_limites.json';
 
 interface MapViewProps {
@@ -25,7 +24,6 @@ const COLORS = {
   default: '#9ca3af',
   border: '#1f2937',
   borderHover: '#000000',
-  cdmxBorder: '#1e40af',      // Azul fuerte para perímetro CDMX
   alcaldiasBorder: '#64748b'  // Gris para límites de alcaldías
 };
 
@@ -76,12 +74,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
         promoteId: 'codigo_postal'
       });
 
-      // Fuente del perímetro de CDMX
-      map.current!.addSource('cdmx-perimetro', {
-        type: 'geojson',
-        data: cdmxPerimetro as GeoJSON.FeatureCollection
-      });
-
       // Fuente de límites de alcaldías
       map.current!.addSource('cdmx-alcaldias', {
         type: 'geojson',
@@ -105,7 +97,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
   useEffect(() => {
     if (!mapReady || !map.current || colonias.length === 0) return;
 
-    const layersToRemove = ['polygons-fill', 'polygons-outline-hover', 'points-circle', 'cdmx-alcaldias-line', 'cdmx-perimetro-line'];
+    const layersToRemove = ['polygons-fill', 'polygons-outline-hover', 'points-circle', 'cdmx-alcaldias-line'];
     layersToRemove.forEach(layer => {
       if (map.current!.getLayer(layer)) {
         map.current!.removeLayer(layer);
@@ -176,25 +168,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
           16, 1.5
         ],
         'line-opacity': 0.6
-      }
-    });
-
-    // === PERÍMETRO DE CDMX (encima de todo) ===
-    map.current.addLayer({
-      id: 'cdmx-perimetro-line',
-      type: 'line',
-      source: 'cdmx-perimetro',
-      paint: {
-        'line-color': COLORS.cdmxBorder,
-        'line-width': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          8, 2,
-          12, 3,
-          16, 4
-        ],
-        'line-opacity': 1
       }
     });
 
@@ -368,10 +341,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
         </div>
         
         <div style={{ borderTop: '1px solid #e5e7eb', marginTop: '12px', paddingTop: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <div style={{ width: '20px', height: '3px', backgroundColor: COLORS.cdmxBorder, borderRadius: '2px' }} />
-            <span style={{ color: '#374151', fontSize: '12px' }}>Límite CDMX</span>
-          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '20px', height: '1px', backgroundColor: COLORS.alcaldiasBorder }} />
             <span style={{ color: '#374151', fontSize: '12px' }}>Alcaldías</span>
