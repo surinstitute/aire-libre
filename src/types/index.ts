@@ -1,15 +1,6 @@
-export interface Question {
-  id: number;
-  text: string;
-  inputType: 'text' | 'select' | 'multiselect';
-  options?: string[];
-  category: 'exposure' | 'vulnerability';
-  weight: number;
-}
+import type { QuizAnswers } from '../data/quizData';
 
-export interface QuizAnswers {
-  [key: number]: string | string[];
-}
+export type { QuizAnswers };
 
 export interface Colonia {
   // Identificadores
