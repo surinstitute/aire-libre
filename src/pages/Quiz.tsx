@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { quizQuestions } from '../data/quizData';
 import { coloniaService } from '../services/coloniaService';
@@ -94,6 +94,23 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center' as const,
     marginBottom: '32px',
     maxWidth: '480px',
+  },
+  enterHint: {
+    fontSize: '13px',
+    color: '#8B7E74',
+    marginTop: '16px',
+    textAlign: 'center' as const,
+    opacity: 0.6,
+  },
+  enterKey: {
+    display: 'inline-block',
+    padding: '2px 8px',
+    backgroundColor: 'rgba(166, 44, 43, 0.08)',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: 600,
+    color: '#A62C2B',
+    marginLeft: '4px',
   },
   optionsContainer: {
     display: 'flex',
@@ -317,16 +334,17 @@ const Quiz: React.FC = () => {
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
   const [animKey, setAnimKey] = useState(0);
 
-  // CP validation with Supabase
   const [cpColonia, setCpColonia] = useState<Colonia | null>(null);
   const [cpLoading, setCpLoading] = useState(false);
   const [cpError, setCpError] = useState(false);
+
+  const answeredRef = useRef(false);
 
   const currentQuestion = quizQuestions[currentIndex];
   const totalQuestions = quizQuestions.length;
   const progress = ((currentIndex + 1) / totalQuestions) * 100;
 
-  // Validate CP against Supabase when user types
+  // Validate CP against Supabase
   useEffect(() => {
     const cp = (answers.codigoPostal as string) || '';
     if (cp.length < 5) {
@@ -334,7 +352,6 @@ const Quiz: React.FC = () => {
       setCpError(false);
       return;
     }
-
     const timeout = setTimeout(async () => {
       setCpLoading(true);
       setCpError(false);
@@ -352,25 +369,23 @@ const Quiz: React.FC = () => {
         setCpError(true);
       }
       setCpLoading(false);
-    }, 500); // debounce
-
+    }, 500);
     return () => clearTimeout(timeout);
   }, [answers.codigoPostal]);
 
-  // Check if current question is answered
+  // Check if answered
   const isCurrentAnswered = useCallback((): boolean => {
     if (!currentQuestion) return false;
     const answer = answers[currentQuestion.id];
-
-    // Special case: CP must be validated against Supabase
-    if (currentQuestion.id === 'codigoPostal') {
-      return cpColonia !== null;
-    }
-
+    if (currentQuestion.id === 'codigoPostal') return cpColonia !== null;
     if (!answer) return false;
     if (Array.isArray(answer)) return answer.length > 0;
     return String(answer).trim().length > 0;
   }, [answers, currentQuestion, cpColonia]);
+
+  useEffect(() => {
+    answeredRef.current = isCurrentAnswered();
+  }, [isCurrentAnswered]);
 
   // Handlers
   const handleSingleSelect = (questionId: string, value: string) => {
@@ -380,9 +395,7 @@ const Quiz: React.FC = () => {
   const handleMultiSelect = (questionId: string, value: string) => {
     setAnswers((prev) => {
       const current = (prev[questionId] as string[]) || [];
-      if (value === 'ninguna') {
-        return { ...prev, [questionId]: ['ninguna'] };
-      }
+      if (value === 'ninguna') return { ...prev, [questionId]: ['ninguna'] };
       const withoutNinguna = current.filter((v) => v !== 'ninguna');
       if (withoutNinguna.includes(value)) {
         return { ...prev, [questionId]: withoutNinguna.filter((v) => v !== value) };
@@ -395,27 +408,29 @@ const Quiz: React.FC = () => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
-  const goNext = () => {
-    if (currentIndex < totalQuestions - 1) {
-      const nextIndex = currentIndex + 1;
-      const nextQuestion = quizQuestions[nextIndex];
-      const enteringNewBlock = nextQuestion.block !== currentQuestion.block;
-
-      setCurrentIndex(nextIndex);
-      setAnimKey((k) => k + 1);
-
-      if (enteringNewBlock) {
-        setScreen('blockIntro');
-      }
-    } else {
-      // Quiz finished → save answers + colonia data, go to results
-      sessionStorage.setItem('quizAnswers', JSON.stringify(answers));
+  const saveAndFinish = useCallback(
+    (finalAnswers: QuizAnswers) => {
+      sessionStorage.setItem('quizAnswers', JSON.stringify(finalAnswers));
       if (cpColonia) {
         sessionStorage.setItem('quizColonia', JSON.stringify(cpColonia));
       }
       navigate('/quiz/resultado');
+    },
+    [cpColonia, navigate]
+  );
+
+  const goNext = useCallback(() => {
+    if (currentIndex < totalQuestions - 1) {
+      const nextIndex = currentIndex + 1;
+      const nextQuestion = quizQuestions[nextIndex];
+      const enteringNewBlock = nextQuestion.block !== currentQuestion.block;
+      setCurrentIndex(nextIndex);
+      setAnimKey((k) => k + 1);
+      if (enteringNewBlock) setScreen('blockIntro');
+    } else {
+      saveAndFinish(answers);
     }
-  };
+  }, [currentIndex, totalQuestions, currentQuestion, answers, saveAndFinish]);
 
   const goBack = () => {
     if (screen === 'blockIntro') {
@@ -430,18 +445,56 @@ const Quiz: React.FC = () => {
     }
   };
 
-  const startQuiz = () => {
+  const startQuiz = useCallback(() => {
     setScreen('blockIntro');
     setAnimKey((k) => k + 1);
-  };
+  }, []);
 
-  const continueFromBlockIntro = () => {
+  const continueFromBlockIntro = useCallback(() => {
     setScreen('question');
     setAnimKey((k) => k + 1);
+  }, []);
+
+  // Enter key to advance on any screen
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter') return;
+      if (screen === 'question' && currentQuestion?.type === 'multi') return;
+
+      if (screen === 'welcome') {
+        e.preventDefault();
+        startQuiz();
+      } else if (screen === 'blockIntro') {
+        e.preventDefault();
+        continueFromBlockIntro();
+      } else if (screen === 'question' && answeredRef.current) {
+        e.preventDefault();
+        goNext();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [screen, currentQuestion, goNext, startQuiz, continueFromBlockIntro]);
+
+  // Single-select auto-advance on click
+  const handleSingleSelectAndAdvance = (questionId: string, value: string) => {
+    handleSingleSelect(questionId, value);
+    setTimeout(() => {
+      if (currentIndex < totalQuestions - 1) {
+        const nextIndex = currentIndex + 1;
+        const nextQuestion = quizQuestions[nextIndex];
+        const enteringNewBlock = nextQuestion.block !== currentQuestion.block;
+        setCurrentIndex(nextIndex);
+        setAnimKey((k) => k + 1);
+        if (enteringNewBlock) setScreen('blockIntro');
+      } else {
+        saveAndFinish({ ...answers, [questionId]: value });
+      }
+    }, 300);
   };
 
   // --------------------------------------------------------
-  // Welcome screen
+  // Welcome
   // --------------------------------------------------------
   if (screen === 'welcome') {
     return (
@@ -455,13 +508,13 @@ const Quiz: React.FC = () => {
               <h1 style={styles.welcomeTitle}>Conoce tu nivel de exposición</h1>
               <p style={styles.welcomeText}>
                 Te damos la bienvenida a este test. Aquí conocerás, de forma
-                personalizada, tu nivel de exposición a la calidad del aire, así como
-                las vulnerabilidades sociales y biológicas que influyen en tu nivel de
-                riesgo.
+                personalizada, tu nivel de exposición a la calidad del aire, así
+                como las vulnerabilidades sociales y biológicas que influyen en tu
+                nivel de riesgo.
               </p>
               <p style={styles.welcomeText}>
-                Esta es una herramienta para entender cómo el entorno, tus hábitos y
-                tu cuerpo interactúan, así como encontrar maneras de mejorar tu
+                Esta es una herramienta para entender cómo el entorno, tus hábitos
+                y tu cuerpo interactúan, así como encontrar maneras de mejorar tu
                 calidad de vida.
               </p>
               <p style={styles.welcomeDisclaimer}>
@@ -482,6 +535,9 @@ const Quiz: React.FC = () => {
               >
                 Comenzar el test
               </button>
+              <p style={styles.enterHint}>
+                o presiona <span style={styles.enterKey}>Enter ↵</span>
+              </p>
             </div>
           </FadeIn>
         </div>
@@ -490,7 +546,7 @@ const Quiz: React.FC = () => {
   }
 
   // --------------------------------------------------------
-  // Block intro screen
+  // Block intro
   // --------------------------------------------------------
   if (screen === 'blockIntro') {
     const q = quizQuestions[currentIndex];
@@ -508,16 +564,12 @@ const Quiz: React.FC = () => {
             <div style={styles.blockTransition}>
               <div style={styles.blockNumber}>Bloque {q.block}</div>
               <h2 style={styles.blockTitle}>{q.blockTitle}</h2>
-              {q.blockSubtitle && (
-                <p style={styles.blockSubtitle}>{q.blockSubtitle}</p>
-              )}
+              {q.blockSubtitle && <p style={styles.blockSubtitle}>{q.blockSubtitle}</p>}
             </div>
           </FadeIn>
         </div>
         <div style={styles.footer}>
-          <button style={styles.btnBack} onClick={goBack}>
-            Atrás
-          </button>
+          <button style={styles.btnBack} onClick={goBack}>Atrás</button>
           <button
             style={styles.btnNext}
             onClick={continueFromBlockIntro}
@@ -538,7 +590,7 @@ const Quiz: React.FC = () => {
   }
 
   // --------------------------------------------------------
-  // Question screen
+  // Question
   // --------------------------------------------------------
   const answered = isCurrentAnswered();
   const isLastQuestion = currentIndex === totalQuestions - 1;
@@ -548,42 +600,27 @@ const Quiz: React.FC = () => {
       <div style={styles.progressBarContainer}>
         <div style={{ ...styles.progressBarFill, width: `${progress}%` }} />
       </div>
-
       <div style={styles.header}>
         <div style={styles.logo}>AIRE LIBRE</div>
-        <div style={styles.stepCounter}>
-          {currentIndex + 1} / {totalQuestions}
-        </div>
+        <div style={styles.stepCounter}>{currentIndex + 1} / {totalQuestions}</div>
       </div>
-
       <div style={styles.content}>
         <FadeIn key={`q-${currentIndex}-${animKey}`}>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={styles.blockLabel}>{currentQuestion.blockTitle}</div>
             <h2 style={styles.questionText}>{currentQuestion.question}</h2>
-            {currentQuestion.helpText && (
-              <p style={styles.helpText}>{currentQuestion.helpText}</p>
-            )}
+            {currentQuestion.helpText && <p style={styles.helpText}>{currentQuestion.helpText}</p>}
             {!currentQuestion.helpText && <div style={{ height: '24px' }} />}
 
             {/* Text / Number input */}
-            {(currentQuestion.type === 'text' ||
-              currentQuestion.type === 'number') && (
+            {(currentQuestion.type === 'text' || currentQuestion.type === 'number') && (
               <div style={styles.inputWrapper}>
                 <input
                   type={currentQuestion.type === 'number' ? 'number' : 'text'}
                   style={styles.inputField}
                   placeholder={currentQuestion.placeholder}
                   value={(answers[currentQuestion.id] as string) || ''}
-                  onChange={(e) =>
-                    handleInputChange(currentQuestion.id, e.target.value)
-                  }
+                  onChange={(e) => handleInputChange(currentQuestion.id, e.target.value)}
                   onFocus={(e) => {
                     e.currentTarget.style.borderColor = '#A62C2B';
                     e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.85)';
@@ -597,30 +634,28 @@ const Quiz: React.FC = () => {
                 {currentQuestion.suffix && (
                   <span style={styles.inputSuffix}>{currentQuestion.suffix}</span>
                 )}
-
-                {/* CP validation feedback */}
                 {currentQuestion.id === 'codigoPostal' && (
                   <div style={styles.cpStatus}>
-                    {cpLoading && (
-                      <span style={{ color: '#8B7E74' }}>Buscando tu zona...</span>
-                    )}
+                    {cpLoading && <span style={{ color: '#8B7E74' }}>Buscando tu zona...</span>}
                     {cpColonia && !cpLoading && (
-                      <span style={{ color: '#2D7A4B' }}>
-                        ✓ {cpColonia.colonias}, {cpColonia.municipio}
-                      </span>
+                      <span style={{ color: '#2D7A4B' }}>✓ {cpColonia.colonias}, {cpColonia.municipio}</span>
                     )}
                     {cpError && !cpLoading && (
                       <span style={{ color: '#A62C2B' }}>
-                        No encontramos ese código postal en nuestra base de datos.
-                        Intenta con otro.
+                        No encontramos ese código postal. Intenta con otro.
                       </span>
                     )}
                   </div>
                 )}
+                {answered && (
+                  <p style={styles.enterHint}>
+                    Presiona <span style={styles.enterKey}>Enter ↵</span> para continuar
+                  </p>
+                )}
               </div>
             )}
 
-            {/* Single select */}
+            {/* Single select — auto-advances */}
             {currentQuestion.type === 'single' && (
               <div style={styles.optionsContainer}>
                 {currentQuestion.options?.map((opt) => {
@@ -634,9 +669,7 @@ const Quiz: React.FC = () => {
                         ...(isSelected ? styles.optionSelected : {}),
                         ...(isHovered && !isSelected ? styles.optionHover : {}),
                       }}
-                      onClick={() =>
-                        handleSingleSelect(currentQuestion.id, opt.value)
-                      }
+                      onClick={() => handleSingleSelectAndAdvance(currentQuestion.id, opt.value)}
                       onMouseEnter={() => setHoveredOption(opt.value)}
                       onMouseLeave={() => setHoveredOption(null)}
                     >
@@ -649,59 +682,56 @@ const Quiz: React.FC = () => {
 
             {/* Multi select */}
             {currentQuestion.type === 'multi' && (
-              <div style={styles.optionsContainer}>
-                {currentQuestion.options?.map((opt) => {
-                  const selected =
-                    (answers[currentQuestion.id] as string[]) || [];
-                  const isSelected = selected.includes(opt.value);
-                  const isHovered = hoveredOption === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      style={{
-                        ...styles.option,
-                        ...(isSelected ? styles.optionSelected : {}),
-                        ...(isHovered && !isSelected ? styles.optionHover : {}),
-                      }}
-                      onClick={() =>
-                        handleMultiSelect(currentQuestion.id, opt.value)
-                      }
-                      onMouseEnter={() => setHoveredOption(opt.value)}
-                      onMouseLeave={() => setHoveredOption(null)}
-                    >
-                      <span
+              <>
+                <div style={styles.optionsContainer}>
+                  {currentQuestion.options?.map((opt) => {
+                    const selected = (answers[currentQuestion.id] as string[]) || [];
+                    const isSelected = selected.includes(opt.value);
+                    const isHovered = hoveredOption === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
                         style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '10px',
+                          ...styles.option,
+                          ...(isSelected ? styles.optionSelected : {}),
+                          ...(isHovered && !isSelected ? styles.optionHover : {}),
                         }}
+                        onClick={() => handleMultiSelect(currentQuestion.id, opt.value)}
+                        onMouseEnter={() => setHoveredOption(opt.value)}
+                        onMouseLeave={() => setHoveredOption(null)}
                       >
-                        <span
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '4px',
-                            border: isSelected
-                              ? '2px solid #A62C2B'
-                              : '2px solid #D4CBC0',
-                            backgroundColor: isSelected ? '#A62C2B' : 'transparent',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            transition: 'all 0.2s ease',
-                            fontSize: '12px',
-                            color: '#fff',
-                          }}
-                        >
-                          {isSelected && '✓'}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+                          <span
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '4px',
+                              border: isSelected ? '2px solid #A62C2B' : '2px solid #D4CBC0',
+                              backgroundColor: isSelected ? '#A62C2B' : 'transparent',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              transition: 'all 0.2s ease',
+                              fontSize: '12px',
+                              color: '#fff',
+                            }}
+                          >
+                            {isSelected && '✓'}
+                          </span>
+                          {opt.label}
                         </span>
-                        {opt.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {answered && (
+                  <p style={styles.enterHint}>
+                    Selecciona todas las que apliquen, luego presiona{' '}
+                    <span style={styles.enterKey}>Siguiente</span>
+                  </p>
+                )}
+              </>
             )}
           </div>
         </FadeIn>
@@ -711,22 +741,13 @@ const Quiz: React.FC = () => {
         <button
           style={styles.btnBack}
           onClick={goBack}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#A62C2B';
-            e.currentTarget.style.color = '#A62C2B';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#D4CBC0';
-            e.currentTarget.style.color = '#8B7E74';
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; e.currentTarget.style.color = '#A62C2B'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#D4CBC0'; e.currentTarget.style.color = '#8B7E74'; }}
         >
           Atrás
         </button>
         <button
-          style={{
-            ...styles.btnNext,
-            ...(!answered ? styles.btnDisabled : {}),
-          }}
+          style={{ ...styles.btnNext, ...(!answered ? styles.btnDisabled : {}) }}
           onClick={answered ? goNext : undefined}
           onMouseEnter={(e) => {
             if (answered) {

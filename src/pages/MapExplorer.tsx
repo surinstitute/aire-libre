@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import MapView from '../components/Map/MapView';
 import { coloniaService } from '../services/coloniaService';
 import type { Colonia } from '../types';
@@ -76,6 +76,7 @@ No todas las personas reaccionamos igual al mismo aire. Las enfermedades crónic
 
 export default function MapExplorer() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [allColonias, setAllColonias] = useState<Colonia[]>([]);
   const [coloniasFiltradas, setColoniasFiltradas] = useState<Colonia[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,6 +98,19 @@ export default function MapExplorer() {
         setLoading(false);
       });
   }, []);
+
+  // Auto-seleccionar CP si viene del quiz (?cp=06600)
+  useEffect(() => {
+    const cpFromQuiz = searchParams.get('cp');
+    if (cpFromQuiz && allColonias.length > 0) {
+      coloniaService.getColoniaByCP(cpFromQuiz).then((colonia) => {
+        if (colonia) {
+          setSelectedColonia(colonia);
+          setSearchCP(cpFromQuiz);
+        }
+      });
+    }
+  }, [allColonias, searchParams]);
 
   // Aplicar filtro cuando cambia
   useEffect(() => {

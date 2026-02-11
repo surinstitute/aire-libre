@@ -4,12 +4,13 @@ import {
   calculateResult,
   calculateDailyAir,
   quizQuestions,
+  birdProfiles,
 } from '../data/quizData';
-import type { QuizAnswers } from '../data/quizData';
+import type { QuizAnswers, BirdProfile } from '../data/quizData';
 import type { Colonia } from '../types';
 
 // ============================================================
-// Slide color palettes (Wrapped-style)
+// Slide color palettes
 // ============================================================
 
 const slidePalettes = [
@@ -21,18 +22,19 @@ const slidePalettes = [
   { bg: '#5B2C3F', text: '#F5F0E8', accent: '#fbbf24' },
   { bg: '#0F4C3A', text: '#F5F0E8', accent: '#86efac' },
   { bg: '#A62C2B', text: '#F5F0E8', accent: '#F5F0E8' },
+  { bg: '#1B3A4B', text: '#F5F0E8', accent: '#fcd34d' }, // summary
 ];
 
 type Palette = (typeof slidePalettes)[0];
 
 // ============================================================
-// Fade-in animation
+// Fade-in
 // ============================================================
 
-const FadeIn: React.FC<{
-  children: React.ReactNode;
-  delay?: number;
-}> = ({ children, delay = 0 }) => {
+const FadeIn: React.FC<{ children: React.ReactNode; delay?: number }> = ({
+  children,
+  delay = 0,
+}) => {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), delay);
@@ -52,7 +54,49 @@ const FadeIn: React.FC<{
 };
 
 // ============================================================
-// Style helpers
+// Share helpers
+// ============================================================
+
+const SITE_URL = 'https://aire-libre-tawny.vercel.app';
+
+function getShareText(bird: BirdProfile, total: number): string {
+  return `Hice el test de Aire Libre y soy un ${bird.name} 🐦 (${total}/20). ¿Cuál eres tú? Descúbrelo en`;
+}
+
+function shareToTwitter(bird: BirdProfile, total: number) {
+  const text = encodeURIComponent(getShareText(bird, total));
+  const url = encodeURIComponent(`${SITE_URL}/quiz`);
+  window.open(
+    `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+    '_blank',
+    'width=600,height=400'
+  );
+}
+
+function shareToFacebook(bird: BirdProfile, total: number) {
+  const url = encodeURIComponent(`${SITE_URL}/quiz`);
+  // Facebook sharer uses the URL's og:tags for content
+  window.open(
+    `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${encodeURIComponent(
+      getShareText(bird, total)
+    )}`,
+    '_blank',
+    'width=600,height=400'
+  );
+}
+
+async function copyForInstagram(bird: BirdProfile, total: number) {
+  const text = `${getShareText(bird, total)} ${SITE_URL}/quiz`;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ============================================================
+// Style helper
 // ============================================================
 
 const s = (p: Palette) => ({
@@ -209,7 +253,6 @@ const s = (p: Palette) => ({
     zIndex: 100,
   },
   cta: {
-    marginTop: '32px',
     padding: '16px 40px',
     fontSize: '16px',
     fontWeight: 600,
@@ -221,6 +264,37 @@ const s = (p: Palette) => ({
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     letterSpacing: '0.5px',
+  },
+  shareBtn: {
+    padding: '12px 20px',
+    fontSize: '14px',
+    fontWeight: 600,
+    fontFamily: "'Lora', Georgia, serif",
+    color: p.text,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    border: '1.5px solid rgba(255,255,255,0.2)',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    transition: 'all 0.25s ease',
+    backdropFilter: 'blur(8px)',
+  },
+  summaryRow: {
+    display: 'flex' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    padding: '12px 0',
+    borderBottom: '1px solid rgba(255,255,255,0.1)',
+    width: '100%',
+    maxWidth: '400px',
+  },
+  summaryLabel: {
+    fontSize: '15px',
+    opacity: 0.7,
+  },
+  summaryValue: {
+    fontSize: '15px',
+    fontWeight: 700,
+    color: p.accent,
   },
 });
 
@@ -237,8 +311,9 @@ const QuizResult: React.FC = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [animKey, setAnimKey] = useState(0);
+  const [igCopied, setIgCopied] = useState(false);
 
-  // Load data from sessionStorage
+  // Load data
   const answers: QuizAnswers = useMemo(() => {
     try {
       const stored = sessionStorage.getItem('quizAnswers');
@@ -257,14 +332,10 @@ const QuizResult: React.FC = () => {
     }
   }, []);
 
-  // Redirect if no answers
   useEffect(() => {
-    if (Object.keys(answers).length === 0) {
-      navigate('/quiz');
-    }
+    if (Object.keys(answers).length === 0) navigate('/quiz');
   }, [answers, navigate]);
 
-  // Real risk level from Supabase data
   const cpRiskLevel = colonia?.categoria_riesgo ?? 'medio';
 
   const result = useMemo(
@@ -275,19 +346,23 @@ const QuizResult: React.FC = () => {
   const dailyAir = useMemo(() => {
     const peso = parseFloat(answers.peso as string) || 70;
     const estatura = parseFloat(answers.estatura as string) || 170;
-    return calculateDailyAir(
-      peso,
-      estatura,
-      answers.edad as string,
-      answers.ejercicio as string
-    );
+    return calculateDailyAir(peso, estatura, answers.edad as string, answers.ejercicio as string);
   }, [answers]);
 
-  // Helper to get option label
   const getLabel = (qId: string, val: string): string => {
     const q = quizQuestions.find((q) => q.id === qId);
     return q?.options?.find((o) => o.value === val)?.label || val;
   };
+
+  // Navigate to map with CP
+  const goToMap = useCallback(() => {
+    const cp = answers.codigoPostal as string;
+    if (cp) {
+      navigate(`/map?cp=${encodeURIComponent(cp)}`);
+    } else {
+      navigate('/map');
+    }
+  }, [answers, navigate]);
 
   // --------------------------------------------------------
   // Build slides
@@ -302,9 +377,7 @@ const QuizResult: React.FC = () => {
       content: (
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}>
-            <div style={{ fontSize: '80px', marginBottom: '16px' }}>
-              {result.bird.emoji}
-            </div>
+            <div style={{ fontSize: '80px', marginBottom: '16px' }}>{result.bird.emoji}</div>
           </FadeIn>
           <FadeIn delay={500}>
             <div style={s(p0).birdName}>{result.bird.name}</div>
@@ -326,11 +399,6 @@ const QuizResult: React.FC = () => {
 
     // 2 — Código postal
     const p1 = slidePalettes[1];
-    const riskLabels: Record<string, string> = {
-      bajo: 'bajo',
-      medio: 'medio',
-      alto: 'alto',
-    };
     out.push({
       palette: p1,
       content: (
@@ -342,17 +410,14 @@ const QuizResult: React.FC = () => {
           <FadeIn delay={500}>
             {colonia ? (
               <p style={s(p1).body}>
-                Vives en{' '}
-                <span style={s(p1).accent}>
-                  {colonia.colonias}, {colonia.municipio}
-                </span>
-                . Tu zona tiene un nivel de exposición ambiental{' '}
-                <span style={s(p1).accent}>{riskLabels[cpRiskLevel]}</span>.
+                Vives en <span style={s(p1).accent}>{colonia.colonias}, {colonia.municipio}</span>.
+                Tu zona tiene un nivel de exposición ambiental{' '}
+                <span style={s(p1).accent}>{cpRiskLevel}</span>.
               </p>
             ) : (
               <p style={s(p1).body}>
                 Tu zona tiene un nivel de exposición ambiental{' '}
-                <span style={s(p1).accent}>{riskLabels[cpRiskLevel]}</span>.
+                <span style={s(p1).accent}>{cpRiskLevel}</span>.
               </p>
             )}
           </FadeIn>
@@ -369,22 +434,15 @@ const QuizResult: React.FC = () => {
           <FadeIn delay={200}>
             <div style={s(p2).small}>Cada día respiras aproximadamente</div>
             <div style={s(p2).bigNum}>{dailyAir.toLocaleString()}</div>
-            <div
-              style={{
-                fontSize: '22px',
-                opacity: 0.6,
-                marginTop: '-8px',
-                marginBottom: '24px',
-              }}
-            >
+            <div style={{ fontSize: '22px', opacity: 0.6, marginTop: '-8px', marginBottom: '24px' }}>
               litros de aire
             </div>
           </FadeIn>
           <FadeIn delay={600}>
             <p style={s(p2).body}>
               Eso equivale a aproximadamente{' '}
-              <span style={s(p2).accent}>{Math.round(dailyAir / 1000)} mil</span>{' '}
-              litros. La calidad de ese aire importa más de lo que crees.
+              <span style={s(p2).accent}>{Math.round(dailyAir / 1000)} mil</span> litros.
+              La calidad de ese aire importa más de lo que crees.
             </p>
           </FadeIn>
         </div>
@@ -399,9 +457,7 @@ const QuizResult: React.FC = () => {
       palette: p3,
       content: (
         <div style={{ textAlign: 'center' }}>
-          <FadeIn delay={200}>
-            <div style={s(p3).title}>{edadLabel}</div>
-          </FadeIn>
+          <FadeIn delay={200}><div style={s(p3).title}>{edadLabel}</div></FadeIn>
           <FadeIn delay={500}>
             <p style={s(p3).body}>
               {isSensitive
@@ -424,11 +480,7 @@ const QuizResult: React.FC = () => {
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}>
             <div style={s(p4).title}>
-              {fumaVal === 'fuma'
-                ? 'Fumas'
-                : fumaVal === 'exfumador'
-                ? 'Dejaste de fumar'
-                : 'No fumas'}
+              {fumaVal === 'fuma' ? 'Fumas' : fumaVal === 'exfumador' ? 'Dejaste de fumar' : 'No fumas'}
             </div>
           </FadeIn>
           <FadeIn delay={500}>
@@ -453,11 +505,7 @@ const QuizResult: React.FC = () => {
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}>
             <div style={s(p5).title}>
-              {ejVal === '3omas'
-                ? '¡Activo/a!'
-                : ejVal === '1a2'
-                ? 'Algo de movimiento'
-                : 'Sin ejercicio regular'}
+              {ejVal === '3omas' ? '¡Activo/a!' : ejVal === '1a2' ? 'Algo de movimiento' : 'Sin ejercicio regular'}
             </div>
           </FadeIn>
           <FadeIn delay={500}>
@@ -473,7 +521,7 @@ const QuizResult: React.FC = () => {
       ),
     });
 
-    // 7 — Condiciones de salud
+    // 7 — Condiciones
     const p6 = slidePalettes[6];
     const conds = (answers.condicionesSalud as string[]) || [];
     const hasConds = conds.length > 0 && !conds.includes('ninguna');
@@ -483,30 +531,22 @@ const QuizResult: React.FC = () => {
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}>
             <div style={s(p6).title}>
-              {hasConds
-                ? 'Tu cuerpo necesita atención extra'
-                : '¡Estás súper sano/a!'}
+              {hasConds ? 'Tu cuerpo necesita atención extra' : '¡Estás súper sano/a!'}
             </div>
           </FadeIn>
           <FadeIn delay={500}>
             {hasConds ? (
               <div>
                 <p style={s(p6).body}>
-                  Reportaste:{' '}
-                  <span style={s(p6).accent}>
-                    {conds.map((c) => getLabel('condicionesSalud', c)).join(', ')}
-                  </span>
+                  Reportaste: <span style={s(p6).accent}>{conds.map((c) => getLabel('condicionesSalud', c)).join(', ')}</span>
                 </p>
                 <p style={{ ...s(p6).body, marginTop: '16px' }}>
-                  Estas condiciones pueden hacer que tu cuerpo sea más sensible a
-                  la contaminación. El monitoreo y cuidado preventivo son tus
-                  mejores aliados.
+                  Estas condiciones pueden hacer que tu cuerpo sea más sensible a la contaminación.
                 </p>
               </div>
             ) : (
               <p style={s(p6).body}>
-                ¡Felicidades! No reportas condiciones de salud preexistentes.
-                Mantener hábitos saludables es la mejor forma de protegerte.
+                ¡Felicidades! No reportas condiciones de salud preexistentes. Mantener hábitos saludables es la mejor forma de protegerte.
               </p>
             )}
           </FadeIn>
@@ -514,87 +554,143 @@ const QuizResult: React.FC = () => {
       ),
     });
 
-    // 8 — Score + CTA
+    // 8 — Score breakdown
     const p7 = slidePalettes[7];
     out.push({
       palette: p7,
       content: (
-        <div
-          style={{
-            textAlign: 'center',
-            width: '100%',
-            maxWidth: '480px',
-          }}
-        >
+        <div style={{ textAlign: 'center', width: '100%', maxWidth: '480px' }}>
           <FadeIn delay={200}>
             <div style={s(p7).small}>Tu puntaje total</div>
             <div style={s(p7).bigNum}>
-              {result.total}
-              <span style={{ fontSize: '32px', opacity: 0.4 }}>/20</span>
+              {result.total}<span style={{ fontSize: '32px', opacity: 0.4 }}>/20</span>
+            </div>
+          </FadeIn>
+          <FadeIn delay={400}>
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.6, marginBottom: '4px' }}>
+                <span>Exposición</span><span>{result.exposure}/10</span>
+              </div>
+              <div style={s(p7).bar}>
+                <div style={{ ...s(p7).barFill, width: `${(result.exposure / 10) * 100}%` }} />
+              </div>
+            </div>
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.6, marginBottom: '4px' }}>
+                <span>Vulnerabilidad</span><span>{result.vulnerability}/10</span>
+              </div>
+              <div style={s(p7).bar}>
+                <div style={{ ...s(p7).barFill, width: `${(result.vulnerability / 10) * 100}%` }} />
+              </div>
+            </div>
+          </FadeIn>
+          <FadeIn delay={700}>
+            <p style={{ fontSize: '16px', lineHeight: 1.7, opacity: 0.75 }}>
+              Ante la crisis de aire, <span style={{ fontWeight: 700, color: p7.accent }}>NO TE QUEDES EN CASA</span>. Sal y pide un cambio.
+            </p>
+          </FadeIn>
+        </div>
+      ),
+    });
+
+    // 9 — SUMMARY + Share + CTA
+    const p8 = slidePalettes[8];
+    const condLabel = hasConds
+      ? conds.map((c) => getLabel('condicionesSalud', c)).join(', ')
+      : 'Ninguna';
+    out.push({
+      palette: p8,
+      content: (
+        <div style={{ textAlign: 'center', width: '100%', maxWidth: '480px' }}>
+          <FadeIn delay={200}>
+            <div style={{ fontSize: '64px', marginBottom: '8px' }}>{result.bird.emoji}</div>
+            <div style={{ ...s(p8).birdName, fontSize: '36px' }}>{result.bird.name}</div>
+            <div style={{ fontSize: '14px', opacity: 0.5, marginBottom: '24px' }}>
+              {result.total}/20 — {result.bird.subtitle}
             </div>
           </FadeIn>
 
           <FadeIn delay={400}>
-            <div style={{ marginBottom: '12px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '14px',
-                  opacity: 0.6,
-                  marginBottom: '4px',
-                }}
-              >
-                <span>Exposición</span>
-                <span>{result.exposure}/10</span>
+            <div style={{ width: '100%' }}>
+              <div style={s(p8).summaryRow}>
+                <span style={s(p8).summaryLabel}>Código postal</span>
+                <span style={s(p8).summaryValue}>{answers.codigoPostal}</span>
               </div>
-              <div style={s(p7).bar}>
-                <div
-                  style={{
-                    ...s(p7).barFill,
-                    width: `${(result.exposure / 10) * 100}%`,
-                  }}
-                />
+              <div style={s(p8).summaryRow}>
+                <span style={s(p8).summaryLabel}>Zona</span>
+                <span style={s(p8).summaryValue}>Riesgo {cpRiskLevel}</span>
               </div>
-            </div>
-            <div style={{ marginBottom: '24px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '14px',
-                  opacity: 0.6,
-                  marginBottom: '4px',
-                }}
-              >
-                <span>Vulnerabilidad</span>
-                <span>{result.vulnerability}/10</span>
+              <div style={s(p8).summaryRow}>
+                <span style={s(p8).summaryLabel}>Aire diario</span>
+                <span style={s(p8).summaryValue}>{dailyAir.toLocaleString()} L</span>
               </div>
-              <div style={s(p7).bar}>
-                <div
-                  style={{
-                    ...s(p7).barFill,
-                    width: `${(result.vulnerability / 10) * 100}%`,
-                  }}
-                />
+              <div style={s(p8).summaryRow}>
+                <span style={s(p8).summaryLabel}>Edad</span>
+                <span style={s(p8).summaryValue}>{edadLabel}</span>
+              </div>
+              <div style={s(p8).summaryRow}>
+                <span style={s(p8).summaryLabel}>Tabaco</span>
+                <span style={s(p8).summaryValue}>
+                  {fumaVal === 'fuma' ? 'Sí' : fumaVal === 'exfumador' ? 'Ex' : 'No'}
+                </span>
+              </div>
+              <div style={s(p8).summaryRow}>
+                <span style={s(p8).summaryLabel}>Ejercicio</span>
+                <span style={s(p8).summaryValue}>{getLabel('ejercicio', ejVal)}</span>
+              </div>
+              <div style={{ ...s(p8).summaryRow, borderBottom: 'none' }}>
+                <span style={s(p8).summaryLabel}>Condiciones</span>
+                <span style={{ ...s(p8).summaryValue, fontSize: '13px', maxWidth: '200px', textAlign: 'right' as const }}>
+                  {condLabel}
+                </span>
               </div>
             </div>
           </FadeIn>
 
+          {/* Share buttons */}
           <FadeIn delay={700}>
-            <p style={{ fontSize: '16px', lineHeight: 1.7, opacity: 0.75, marginBottom: '8px' }}>
-              Ante la crisis de aire,{' '}
-              <span style={{ fontWeight: 700, color: p7.accent }}>
-                NO TE QUEDES EN CASA
-              </span>
-              . Sal y pide un cambio.
-            </p>
+            <div style={{ marginTop: '28px', marginBottom: '8px' }}>
+              <div style={s(p8).small}>Comparte tu resultado</div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' as const }}>
+                <button
+                  style={s(p8).shareBtn}
+                  onClick={() => shareToTwitter(result.bird, result.total)}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
+                >
+                  𝕏 Twitter
+                </button>
+                <button
+                  style={s(p8).shareBtn}
+                  onClick={() => shareToFacebook(result.bird, result.total)}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
+                >
+                  Facebook
+                </button>
+                <button
+                  style={s(p8).shareBtn}
+                  onClick={async () => {
+                    const ok = await copyForInstagram(result.bird, result.total);
+                    if (ok) {
+                      setIgCopied(true);
+                      setTimeout(() => setIgCopied(false), 2000);
+                    }
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
+                >
+                  {igCopied ? '✓ Copiado' : 'Instagram (copiar)'}
+                </button>
+              </div>
+            </div>
           </FadeIn>
 
+          {/* CTA to map */}
           <FadeIn delay={900}>
             <button
-              style={s(p7).cta}
-              onClick={() => navigate('/map')}
+              style={{ ...s(p8).cta, marginTop: '24px' }}
+              onClick={goToMap}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
@@ -612,7 +708,7 @@ const QuizResult: React.FC = () => {
     });
 
     return out;
-  }, [answers, result, dailyAir, cpRiskLevel, colonia, navigate]);
+  }, [answers, result, dailyAir, cpRiskLevel, colonia, goToMap, igCopied]);
 
   // Navigation
   const total = slides.length;
@@ -627,10 +723,10 @@ const QuizResult: React.FC = () => {
     [total]
   );
 
-  // Keyboard
+  // Keyboard + Enter
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === ' ') {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         goTo(Math.min(currentSlide + 1, total - 1));
       } else if (e.key === 'ArrowLeft') {
@@ -664,9 +760,7 @@ const QuizResult: React.FC = () => {
       }}
     >
       <div style={st.topLabel}>AIRE LIBRE</div>
-      <div style={st.counter}>
-        {currentSlide + 1} / {total}
-      </div>
+      <div style={st.counter}>{currentSlide + 1} / {total}</div>
 
       <div
         key={`s-${currentSlide}-${animKey}`}
@@ -682,17 +776,12 @@ const QuizResult: React.FC = () => {
         {slide.content}
       </div>
 
-      {/* Arrows */}
       {currentSlide > 0 && (
         <button
           style={{ ...st.arrow, left: '16px' }}
           onClick={() => goTo(currentSlide - 1)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}
         >
           ‹
         </button>
@@ -701,26 +790,20 @@ const QuizResult: React.FC = () => {
         <button
           style={{ ...st.arrow, right: '16px' }}
           onClick={() => goTo(currentSlide + 1)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}
         >
           ›
         </button>
       )}
 
-      {/* Dots */}
       <div style={st.dots}>
         {slides.map((_, i) => (
           <button
             key={i}
             style={{
               ...st.dot,
-              backgroundColor:
-                i === currentSlide ? palette.accent : 'rgba(255,255,255,0.25)',
+              backgroundColor: i === currentSlide ? palette.accent : 'rgba(255,255,255,0.25)',
               transform: i === currentSlide ? 'scale(1.3)' : 'scale(1)',
             }}
             onClick={() => goTo(i)}
