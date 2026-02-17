@@ -6,7 +6,7 @@ import type { QuizAnswers } from '../data/quizData';
 import type { Colonia } from '../types';
 
 // ============================================================
-// Styles (matches project palette: beige #F5F0E8, wine #A62C2B)
+// Styles
 // ============================================================
 
 const styles: Record<string, React.CSSProperties> = {
@@ -295,13 +295,13 @@ const styles: Record<string, React.CSSProperties> = {
 };
 
 // ============================================================
-// Fade-in animation
+// Fade-in
 // ============================================================
 
-const FadeIn: React.FC<{
-  children: React.ReactNode;
-  delay?: number;
-}> = ({ children, delay = 0 }) => {
+const FadeIn: React.FC<{ children: React.ReactNode; delay?: number }> = ({
+  children,
+  delay = 0,
+}) => {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), delay);
@@ -338,11 +338,17 @@ const Quiz: React.FC = () => {
   const [cpLoading, setCpLoading] = useState(false);
   const [cpError, setCpError] = useState(false);
 
-  const answeredRef = useRef(false);
+  // Lock to prevent double-advance
+  const isAdvancing = useRef(false);
 
   const currentQuestion = quizQuestions[currentIndex];
   const totalQuestions = quizQuestions.length;
   const progress = ((currentIndex + 1) / totalQuestions) * 100;
+
+  // Reset lock when index or screen changes
+  useEffect(() => {
+    isAdvancing.current = false;
+  }, [currentIndex, screen]);
 
   // Validate CP against Supabase
   useEffect(() => {
@@ -383,15 +389,7 @@ const Quiz: React.FC = () => {
     return String(answer).trim().length > 0;
   }, [answers, currentQuestion, cpColonia]);
 
-  useEffect(() => {
-    answeredRef.current = isCurrentAnswered();
-  }, [isCurrentAnswered]);
-
   // Handlers
-  const handleSingleSelect = (questionId: string, value: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
-  };
-
   const handleMultiSelect = (questionId: string, value: string) => {
     setAnswers((prev) => {
       const current = (prev[questionId] as string[]) || [];
@@ -419,18 +417,27 @@ const Quiz: React.FC = () => {
     [cpColonia, navigate]
   );
 
-  const goNext = useCallback(() => {
-    if (currentIndex < totalQuestions - 1) {
-      const nextIndex = currentIndex + 1;
-      const nextQuestion = quizQuestions[nextIndex];
-      const enteringNewBlock = nextQuestion.block !== currentQuestion.block;
-      setCurrentIndex(nextIndex);
-      setAnimKey((k) => k + 1);
-      if (enteringNewBlock) setScreen('blockIntro');
-    } else {
-      saveAndFinish(answers);
-    }
-  }, [currentIndex, totalQuestions, currentQuestion, answers, saveAndFinish]);
+  // Core advance function with lock
+  const advanceToNext = useCallback(
+    (overrideAnswers?: QuizAnswers) => {
+      if (isAdvancing.current) return; // prevent double
+      isAdvancing.current = true;
+
+      const finalAnswers = overrideAnswers || answers;
+
+      if (currentIndex < totalQuestions - 1) {
+        const nextIndex = currentIndex + 1;
+        const nextQuestion = quizQuestions[nextIndex];
+        const enteringNewBlock = nextQuestion.block !== currentQuestion.block;
+        setCurrentIndex(nextIndex);
+        setAnimKey((k) => k + 1);
+        if (enteringNewBlock) setScreen('blockIntro');
+      } else {
+        saveAndFinish(finalAnswers);
+      }
+    },
+    [currentIndex, totalQuestions, currentQuestion, answers, saveAndFinish]
+  );
 
   const goBack = () => {
     if (screen === 'blockIntro') {
@@ -455,11 +462,23 @@ const Quiz: React.FC = () => {
     setAnimKey((k) => k + 1);
   }, []);
 
-  // Enter key to advance on any screen
+  // Single-select: set answer + auto-advance after delay
+  const handleSingleSelectAndAdvance = (questionId: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    setTimeout(() => {
+      const updatedAnswers = { ...answers, [questionId]: value };
+      advanceToNext(updatedAnswers);
+    }, 350);
+  };
+
+  // Enter key handler
+  // - Welcome/BlockIntro: Enter continues
+  // - Text/Number questions: Enter advances if answered
+  // - Single-select: Enter does NOT advance (click auto-advances)
+  // - Multi-select: Enter does NOT advance (use Siguiente button)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Enter') return;
-      if (screen === 'question' && currentQuestion?.type === 'multi') return;
 
       if (screen === 'welcome') {
         e.preventDefault();
@@ -467,31 +486,19 @@ const Quiz: React.FC = () => {
       } else if (screen === 'blockIntro') {
         e.preventDefault();
         continueFromBlockIntro();
-      } else if (screen === 'question' && answeredRef.current) {
-        e.preventDefault();
-        goNext();
+      } else if (screen === 'question') {
+        // Only advance with Enter on text/number inputs
+        const type = currentQuestion?.type;
+        if ((type === 'text' || type === 'number') && isCurrentAnswered()) {
+          e.preventDefault();
+          advanceToNext();
+        }
+        // For single/multi: do nothing on Enter
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [screen, currentQuestion, goNext, startQuiz, continueFromBlockIntro]);
-
-  // Single-select auto-advance on click
-  const handleSingleSelectAndAdvance = (questionId: string, value: string) => {
-    handleSingleSelect(questionId, value);
-    setTimeout(() => {
-      if (currentIndex < totalQuestions - 1) {
-        const nextIndex = currentIndex + 1;
-        const nextQuestion = quizQuestions[nextIndex];
-        const enteringNewBlock = nextQuestion.block !== currentQuestion.block;
-        setCurrentIndex(nextIndex);
-        setAnimKey((k) => k + 1);
-        if (enteringNewBlock) setScreen('blockIntro');
-      } else {
-        saveAndFinish({ ...answers, [questionId]: value });
-      }
-    }, 300);
-  };
+  }, [screen, currentQuestion, isCurrentAnswered, advanceToNext, startQuiz, continueFromBlockIntro]);
 
   // --------------------------------------------------------
   // Welcome
@@ -508,14 +515,14 @@ const Quiz: React.FC = () => {
               <h1 style={styles.welcomeTitle}>Conoce tu nivel de exposición</h1>
               <p style={styles.welcomeText}>
                 Te damos la bienvenida a este test. Aquí conocerás, de forma
-                personalizada, tu nivel de exposición a la calidad del aire, así
-                como las vulnerabilidades sociales y biológicas que influyen en tu
-                nivel de riesgo.
+                personalizada, tu nivel de exposición a la calidad del aire, así como
+                las vulnerabilidades sociales y biológicas que influyen en tu nivel de
+                riesgo.
               </p>
               <p style={styles.welcomeText}>
-                Esta es una herramienta para entender cómo el entorno, tus hábitos
-                y tu cuerpo interactúan, así como encontrar maneras de mejorar tu
-                calidad de vida.
+                Esta es una herramienta para entender cómo el entorno, tus hábitos y tu
+                cuerpo interactúan, así como encontrar maneras de mejorar tu calidad de
+                vida.
               </p>
               <p style={styles.welcomeDisclaimer}>
                 No es un diagnóstico médico. Tus respuestas son anónimas y esta
@@ -655,7 +662,7 @@ const Quiz: React.FC = () => {
               </div>
             )}
 
-            {/* Single select — auto-advances */}
+            {/* Single select — click auto-advances */}
             {currentQuestion.type === 'single' && (
               <div style={styles.optionsContainer}>
                 {currentQuestion.options?.map((opt) => {
@@ -680,7 +687,7 @@ const Quiz: React.FC = () => {
               </div>
             )}
 
-            {/* Multi select */}
+            {/* Multi select — explicit Siguiente button needed */}
             {currentQuestion.type === 'multi' && (
               <>
                 <div style={styles.optionsContainer}>
@@ -748,7 +755,7 @@ const Quiz: React.FC = () => {
         </button>
         <button
           style={{ ...styles.btnNext, ...(!answered ? styles.btnDisabled : {}) }}
-          onClick={answered ? goNext : undefined}
+          onClick={answered ? () => advanceToNext() : undefined}
           onMouseEnter={(e) => {
             if (answered) {
               e.currentTarget.style.transform = 'translateY(-1px)';

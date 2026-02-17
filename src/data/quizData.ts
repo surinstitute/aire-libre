@@ -1,13 +1,12 @@
 // ============================================================
-// AIRE LIBRE — Quiz Configuration
+// AIRE LIBRE — Quiz Configuration (v2)
 // ============================================================
-// Preguntas basadas en páginas 1-3 del PDF del cliente.
-// Scoring basado en la matriz de págs 16-18, adaptado.
-// Pájaros: versión nueva (Gorrión Cantor, Paloma, etc.)
-//
-// Para modificar preguntas: edita el array quizQuestions.
-// Para modificar scoring: edita las funciones calculate*.
-// Para agregar recomendaciones: llena los arrays en birdProfiles.
+// 9 preguntas, 4 bloques.
+// Scoring en 2 ejes:
+//   MORADO (Contexto): Q1(CP) + Q7(redes) + Q8(acceso) → máx 6
+//   ROSA (Individuo):  Q2(edad) + Q5(tabaco) + Q6(condiciones) + Q9(ejercicio) → máx 7
+// Cada eje se categoriza: 0=favorable, 1=moderado, 2=perjudicial
+// Pájaro se asigna por matriz Contexto×Individuo.
 // ============================================================
 
 // -----------------------------------------------------------
@@ -47,7 +46,6 @@ export interface BirdProfile {
   id: string;
   name: string;
   emoji: string;
-  scoreRange: [number, number];
   subtitle: string;
   narrative: string;
   recommendations: string[];
@@ -55,7 +53,7 @@ export interface BirdProfile {
 }
 
 // -----------------------------------------------------------
-// QUESTIONS (11 preguntas, 4 bloques — págs 1-3 del PDF)
+// QUESTIONS (9 preguntas, 4 bloques)
 // -----------------------------------------------------------
 
 export const quizQuestions: QuizQuestion[] = [
@@ -78,6 +76,8 @@ export const quizQuestions: QuizQuestion[] = [
     id: 'edad',
     block: 2,
     blockTitle: 'Tu salud y tu cuerpo de ave',
+    blockSubtitle:
+      'Tu cuerpo, tu edad y tus hábitos determinan cómo reaccionas al aire que respiras.',
     question: '¿Cuántos años tienes?',
     type: 'single',
     options: [
@@ -145,12 +145,14 @@ export const quizQuestions: QuizQuestion[] = [
     id: 'redesApoyo',
     block: 3,
     blockTitle: '¿Qué tan fuerte es tu escudo?',
-    question: '¿Qué tan acompañado/a te sientes por tu comunidad o redes cercanas?',
+    blockSubtitle:
+      'Tu red de apoyo y acceso a información influyen en tu capacidad de protegerte.',
+    question: 'Cuando te enfermas, ¿alguien cuida de ti?',
     type: 'single',
     options: [
-      { label: 'Tengo redes de apoyo sólidas', value: 'solidas' },
-      { label: 'Tengo algunas personas de apoyo', value: 'algunas' },
-      { label: 'Me siento aislado/a', value: 'aislado' },
+      { label: 'Sí, tengo buenas redes de apoyo', value: 'solidas' },
+      { label: 'A veces, tengo algunas personas de apoyo', value: 'algunas' },
+      { label: 'No, nadie', value: 'nadie' },
     ],
     required: true,
   },
@@ -160,7 +162,7 @@ export const quizQuestions: QuizQuestion[] = [
     blockTitle: '¿Qué tan fuerte es tu escudo?',
     question:
       '¿Qué tan fácil es para ti acceder a información sobre salud o medio ambiente?',
-    helpText: 'Alertas, recomendaciones, servicios de salud.',
+    helpText: 'Alertas, recomendaciones, servicios.',
     type: 'single',
     options: [
       { label: 'Muy fácil', value: 'facil' },
@@ -175,176 +177,149 @@ export const quizQuestions: QuizQuestion[] = [
     id: 'ejercicio',
     block: 4,
     blockTitle: 'Tus hábitos de vuelo',
+    blockSubtitle:
+      'Tu actividad física influye en tu capacidad pulmonar y salud general.',
     question: '¿Cuántas veces a la semana realizas ejercicio?',
     type: 'single',
     options: [
+      { label: '2 veces por semana mínimo', value: '2omas' },
+      { label: 'De vez en cuando', value: 'aveces' },
       { label: 'No realizo ejercicio', value: 'ninguno' },
-      { label: '1–2 días', value: '1a2' },
-      { label: '3 días o más', value: '3omas' },
-    ],
-    required: true,
-  },
-  {
-    id: 'transporte',
-    block: 4,
-    blockTitle: 'Tus hábitos de vuelo',
-    question: '¿Cuál es tu medio de transporte más utilizado?',
-    type: 'single',
-    options: [
-      { label: 'A pie', value: 'pie' },
-      { label: 'Bicicleta', value: 'bici' },
-      { label: 'Metro, metrobús, RTP, cablebús', value: 'metro' },
-      { label: 'Automóvil', value: 'auto' },
-      { label: 'Motocicleta', value: 'moto' },
-      { label: 'Peseros, combis, mototaxis', value: 'pesero' },
-    ],
-    required: true,
-  },
-  {
-    id: 'tiempoTraslado',
-    block: 4,
-    blockTitle: 'Tus hábitos de vuelo',
-    question: '¿Cuánto tiempo dedicas a traslados diariamente?',
-    type: 'single',
-    options: [
-      { label: 'Menos de 30 min', value: 'menos30' },
-      { label: '30–60 min', value: '30a60' },
-      { label: '1–2 horas', value: '1a2h' },
-      { label: '2–3 horas', value: '2a3h' },
-      { label: 'Más de 3 horas', value: 'mas3h' },
     ],
     required: true,
   },
 ];
 
 // -----------------------------------------------------------
-// SCORING
-// -----------------------------------------------------------
-// Exposición (0–10): CP + transporte + traslado + redes + acceso
-// Vulnerabilidad (0–10): edad + condiciones + tabaco + ejercicio
-// Total = 0–20 → asigna pájaro
+// SCORING — 2 ejes
 // -----------------------------------------------------------
 
-export function getExposureFromCP(
-  riskLevel: 'bajo' | 'medio' | 'alto'
-): number {
-  const map: Record<string, number> = {
-    bajo: 0,
-    medio: 2,
-    alto: 3,
-  };
-  return map[riskLevel] ?? 1;
-}
-
-export function calculateExposure(
+/**
+ * EJE MORADO (Contexto): Q1 + Q7 + Q8 → raw 0-6
+ *   0-2 = Favorable (0)
+ *   3-4 = Moderado (1)
+ *   5+  = Perjudicial (2)
+ */
+export function calculateContexto(
   cpRiskLevel: 'bajo' | 'medio' | 'alto',
   answers: QuizAnswers
-): number {
-  let score = 0;
+): { raw: number; category: 0 | 1 | 2 } {
+  let raw = 0;
 
-  // CP risk (0-3)
-  score += getExposureFromCP(cpRiskLevel);
+  // Q1: CP risk → 0/1/2
+  const cpMap: Record<string, number> = { bajo: 0, medio: 1, alto: 2 };
+  raw += cpMap[cpRiskLevel] ?? 1;
 
-  // Transport (0-2)
-  const transportMap: Record<string, number> = {
-    pie: 0,
-    bici: 0,
-    metro: 1,
-    auto: 2,
-    moto: 2,
-    pesero: 2,
-  };
-  score += transportMap[answers.transporte as string] ?? 1;
+  // Q7: Redes de apoyo → 0/1/2
+  const redesMap: Record<string, number> = { solidas: 0, algunas: 1, nadie: 2 };
+  raw += redesMap[answers.redesApoyo as string] ?? 1;
 
-  // Commute time (0-2)
-  const commuteMap: Record<string, number> = {
-    menos30: 0,
-    '30a60': 1,
-    '1a2h': 2,
-    '2a3h': 2,
-    mas3h: 2,
-  };
-  score += commuteMap[answers.tiempoTraslado as string] ?? 1;
+  // Q8: Acceso a info → 0/1/2
+  const accesoMap: Record<string, number> = { facil: 0, algo: 1, dificil: 2 };
+  raw += accesoMap[answers.accesoInfo as string] ?? 1;
 
-  // Support networks (0-1)
-  const redesMap: Record<string, number> = {
-    solidas: 0,
-    algunas: 0.5,
-    aislado: 1,
-  };
-  score += redesMap[answers.redesApoyo as string] ?? 0;
+  // Categorize
+  let category: 0 | 1 | 2;
+  if (raw <= 2) category = 0;
+  else if (raw <= 4) category = 1;
+  else category = 2;
 
-  // Access to info (0-2)
-  const accesoMap: Record<string, number> = {
-    facil: 0,
-    algo: 1,
-    dificil: 2,
-  };
-  score += accesoMap[answers.accesoInfo as string] ?? 0;
-
-  return Math.min(10, Math.round(score));
+  return { raw, category };
 }
 
-export function calculateVulnerability(answers: QuizAnswers): number {
-  let score = 0;
+/**
+ * EJE ROSA (Individuo): Q2 + Q5 + Q6 + Q9 → raw 0-8
+ *   0-2 = Resistente (0)
+ *   3-5 = Medianamente resistente (1)
+ *   5+  = Altamente sensible (2)
+ */
+export function calculateIndividuo(
+  answers: QuizAnswers
+): { raw: number; category: 0 | 1 | 2 } {
+  let raw = 0;
 
-  // Age (0-2) — <12 and 65+ are sensitive
-  const edadMap: Record<string, number> = {
-    menor12: 2,
-    '12a64': 0,
-    mayor65: 2,
-  };
-  score += edadMap[answers.edad as string] ?? 0;
+  // Q2: Edad → 0/1
+  const edadMap: Record<string, number> = { menor12: 1, '12a64': 0, mayor65: 1 };
+  raw += edadMap[answers.edad as string] ?? 0;
 
-  // Health conditions (0-3)
-  const conditions = answers.condicionesSalud as string[];
-  if (conditions && !conditions.includes('ninguna')) {
-    const count = conditions.length;
-    if (count >= 4) score += 3;
-    else if (count >= 2) score += 2;
-    else score += 1;
+  // Q5: Tabaco → 0/1/2
+  const fumaMap: Record<string, number> = { nunca: 0, exfumador: 1, fuma: 2 };
+  raw += fumaMap[answers.fuma as string] ?? 0;
+
+  // Q6: Condiciones de salud → 0/1/2
+  const conditions = (answers.condicionesSalud as string[]) || [];
+  if (!conditions.length || conditions.includes('ninguna')) {
+    raw += 0;
+  } else if (conditions.length <= 2) {
+    raw += 1;
+  } else {
+    raw += 2; // 3 o más
   }
 
-  // Smoking (0-2)
-  const fumaMap: Record<string, number> = {
-    nunca: 0,
-    exfumador: 1,
-    fuma: 2,
-  };
-  score += fumaMap[answers.fuma as string] ?? 0;
+  // Q9: Ejercicio → 0/1/2
+  const ejMap: Record<string, number> = { '2omas': 0, aveces: 1, ninguno: 2 };
+  raw += ejMap[answers.ejercicio as string] ?? 1;
 
-  // Exercise — less = more vulnerable (0-2)
-  const ejercicioMap: Record<string, number> = {
-    '3omas': 0,
-    '1a2': 1,
-    ninguno: 2,
-  };
-  score += ejercicioMap[answers.ejercicio as string] ?? 0;
+  // Categorize
+  let category: 0 | 1 | 2;
+  if (raw <= 2) category = 0;
+  else if (raw <= 5) category = 1;
+  else category = 2;
 
-  return Math.min(10, Math.round(score));
+  return { raw, category };
 }
+
+// -----------------------------------------------------------
+// BIRD MATRIX — Contexto × Individuo
+// -----------------------------------------------------------
+//
+//              | Individuo 0  | Individuo 1  | Individuo 2
+// -------------|--------------|--------------|-------------
+// Contexto 0   | Gorrión      | Tortolita    | Paloma
+// Contexto 1   | Tortolita    | Paloma       | Canario
+// Contexto 2   | Jilguero     | Canario      | Canario
+//
+
+const BIRD_MATRIX: Record<string, string> = {
+  '0-0': 'gorrion',
+  '0-1': 'tortolita',
+  '0-2': 'paloma',
+  '1-0': 'tortolita',
+  '1-1': 'paloma',
+  '1-2': 'canario',
+  '2-0': 'jilguero',
+  '2-1': 'canario',
+  '2-2': 'canario',
+};
+
+function getBirdByMatrix(contexto: 0 | 1 | 2, individuo: 0 | 1 | 2): BirdProfile {
+  const key = `${contexto}-${individuo}`;
+  const birdId = BIRD_MATRIX[key] ?? 'paloma';
+  return birdProfiles.find((b) => b.id === birdId) ?? birdProfiles[2];
+}
+
+// -----------------------------------------------------------
+// MAIN RESULT FUNCTION
+// -----------------------------------------------------------
 
 export function calculateResult(
   cpRiskLevel: 'bajo' | 'medio' | 'alto',
   answers: QuizAnswers
 ): {
-  exposure: number;
-  vulnerability: number;
+  contexto: { raw: number; category: 0 | 1 | 2 };
+  individuo: { raw: number; category: 0 | 1 | 2 };
   total: number;
   bird: BirdProfile;
 } {
-  const exposure = calculateExposure(cpRiskLevel, answers);
-  const vulnerability = calculateVulnerability(answers);
-  const total = exposure + vulnerability;
-  const bird = getBirdByScore(total);
-  return { exposure, vulnerability, total, bird };
+  const contexto = calculateContexto(cpRiskLevel, answers);
+  const individuo = calculateIndividuo(answers);
+  const total = contexto.raw + individuo.raw;
+  const bird = getBirdByMatrix(contexto.category, individuo.category);
+  return { contexto, individuo, total, bird };
 }
 
 // -----------------------------------------------------------
-// AIR CALCULATOR
-// -----------------------------------------------------------
-// Estimates liters of air breathed per day.
-// Uses Mosteller BSA formula + minute ventilation.
+// AIR CALCULATOR (unchanged)
 // -----------------------------------------------------------
 
 export function calculateDailyAir(
@@ -370,9 +345,9 @@ export function calculateDailyAir(
   let exerciseMinutesPerDay = 0;
   const exerciseVentilation = 40; // L/min during moderate exercise
 
-  if (ejercicio === '3omas') {
+  if (ejercicio === '2omas') {
     exerciseMinutesPerDay = 60;
-  } else if (ejercicio === '1a2') {
+  } else if (ejercicio === 'aveces') {
     exerciseMinutesPerDay = 25;
   }
 
@@ -385,7 +360,7 @@ export function calculateDailyAir(
 }
 
 // -----------------------------------------------------------
-// BIRD PROFILES (nombres nuevos — págs 3-6 del PDF)
+// BIRD PROFILES
 // -----------------------------------------------------------
 
 export const birdProfiles: BirdProfile[] = [
@@ -393,19 +368,21 @@ export const birdProfiles: BirdProfile[] = [
     id: 'gorrion',
     name: 'Gorrión Cantor',
     emoji: '🐦',
-    scoreRange: [0, 4],
     subtitle: 'Exposición y vulnerabilidad muy bajas',
     narrative:
       'Tú vuelas ligero. El entorno donde te mueves tiene buena calidad ambiental y tu cuerpo no presenta factores de alta susceptibilidad. Estás en una zona de relativo equilibrio.',
-    recommendations: [],
+    recommendations: [
+      'Los entornos que funcionan suelen tener verde cercano, menor tráfico y espacios caminables. Cuidarlos es clave para que no se pierdan.',
+      'Mantenerse informado/a ayuda a detectar cambios tempranos en el aire y el calor.',
+      'Estos contextos muestran que otras formas de ciudad sí son posibles.',
+    ],
     closingLine:
       'Este equilibrio no es casual: es el resultado de decisiones urbanas.',
   },
   {
-    id: 'paloma',
-    name: 'Paloma Mensajera',
-    emoji: '🐦',
-    scoreRange: [5, 8],
+    id: 'tortolita',
+    name: 'Tortolita Luchona',
+    emoji: '🕊️',
     subtitle: 'Exposición moderada',
     narrative:
       'Habitas la ciudad con los ojos abiertos. Hay tráfico, calor y movimiento, pero también margen para protegerte. Este resultado refleja una exposición cotidiana compartida por muchas personas en entornos urbanos, no una condición individual aislada.',
@@ -414,10 +391,9 @@ export const birdProfiles: BirdProfile[] = [
       'La atención y la información son herramientas clave para moverte con mayor cuidado.',
   },
   {
-    id: 'tortolita',
-    name: 'Tortolita Luchona',
+    id: 'paloma',
+    name: 'Paloma Común',
     emoji: '🐦',
-    scoreRange: [9, 12],
     subtitle: 'Vulnerabilidad biológica o exposición frecuente',
     narrative:
       'Percibes con claridad lo que ocurre a tu alrededor. El ambiente –o ciertas características del cuerpo– hacen que el aire afecte tu vida con mayor intensidad. Esto no implica fragilidad, sino mayor necesidad de cuidado.',
@@ -429,7 +405,6 @@ export const birdProfiles: BirdProfile[] = [
     id: 'jilguero',
     name: 'Jilguero Cansado',
     emoji: '🐦',
-    scoreRange: [13, 16],
     subtitle: 'Alta exposición estructural',
     narrative:
       'Vuelas mucho, vuelas lejos, pero el entorno pesa. Las condiciones del lugar donde vives o te mueves —tráfico, calor, falta de verde— exigen más energía y cuidado. Este resultado señala una carga ambiental estructural, compartida por muchas personas en la ciudad.',
@@ -439,7 +414,6 @@ export const birdProfiles: BirdProfile[] = [
     id: 'canario',
     name: 'Canario en Alerta',
     emoji: '🐦',
-    scoreRange: [17, 20],
     subtitle: 'Entorno exigente + cuerpo sensible',
     narrative:
       'Vives en un entorno que hoy exige más cuidados. El aire, el calor y la forma en que están organizadas nuestras ciudades no siempre juegan a favor, y algunos cuerpos lo resienten antes que otros.',
@@ -448,11 +422,3 @@ export const birdProfiles: BirdProfile[] = [
       'Cuidarte también es una forma de resistir y de exigir ciudades más justas.',
   },
 ];
-
-export function getBirdByScore(score: number): BirdProfile {
-  const clamped = Math.max(0, Math.min(20, score));
-  const found = birdProfiles.find(
-    (b) => clamped >= b.scoreRange[0] && clamped <= b.scoreRange[1]
-  );
-  return found ?? birdProfiles[2]; // fallback to middle
-}

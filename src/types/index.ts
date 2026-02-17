@@ -19,7 +19,7 @@ export interface Colonia {
   pob_sin_diabetes: number;
   pob_sin_hipertension: number;
   pob_sin_enf_respiratorias: number;
-  pob_sin_infecciones_resp: number;
+  pob_sin_infecciones_resp_tb: number;
   pob_sin_enf_cardiovasculares: number;
   
   // Población
@@ -36,12 +36,13 @@ export interface Colonia {
   
   // Acceso a Servicios de Salud
   indice_infraestructura_sanitaria: number;
+  proximidad_infraestructura_medica: number;
   pob_derechohabiente: number;
   
   // Socioeconómica
   subindice_socioeconomico: number;
   anos_escolaridad: number;
-  viviendas_internet: number;
+  viviendas_computadora: number;
   viviendas_lavadora: number;
   viviendas_refrigerador: number;
   
@@ -49,6 +50,12 @@ export interface Colonia {
   indice_desarrollo: number;
   indice_prioridad_sensible: number;
   indice_resumen: number;
+  
+  // Cambio Climático
+  subindice_cambio_climatico: number;
+  indice_frescura: number;
+  seguridad_inundaciones: number;
+  
   categoria_riesgo: 'bajo' | 'medio' | 'alto';
 }
 

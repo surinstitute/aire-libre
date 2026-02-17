@@ -4,13 +4,12 @@ import {
   calculateResult,
   calculateDailyAir,
   quizQuestions,
-  birdProfiles,
 } from '../data/quizData';
 import type { QuizAnswers, BirdProfile } from '../data/quizData';
 import type { Colonia } from '../types';
 
 // ============================================================
-// Slide color palettes
+// Slide palettes
 // ============================================================
 
 const slidePalettes = [
@@ -54,17 +53,236 @@ const FadeIn: React.FC<{ children: React.ReactNode; delay?: number }> = ({
 };
 
 // ============================================================
-// Share helpers
+// Share helpers — Canvas API (no html2canvas dependency)
 // ============================================================
 
 const SITE_URL = 'https://aire-libre-tawny.vercel.app';
 
-function getShareText(bird: BirdProfile, total: number): string {
-  return `Hice el test de Aire Libre y soy un ${bird.name} 🐦 (${total}/20). ¿Cuál eres tú? Descúbrelo en`;
+function getShareText(bird: BirdProfile, _total: number): string {
+  return `Hice el test de Aire Libre y soy un ${bird.name} 🐦. ¿Cuál eres tú? Descúbrelo en ${SITE_URL}/quiz`;
 }
 
+interface ShareCardData {
+  birdEmoji: string;
+  birdName: string;
+  subtitle: string;
+  contextoLabel: string;
+  individuoLabel: string;
+  rows: { label: string; value: string }[];
+}
+
+/**
+ * Helper: draw a rounded rectangle (compatible with all browsers)
+ */
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, r: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+/**
+ * Helper: draw a pill/badge shape
+ */
+function drawPill(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number, y: number,
+  bgColor: string, textColor: string
+) {
+  ctx.font = 'bold 13px Georgia, serif';
+  const metrics = ctx.measureText(text);
+  const pw = metrics.width + 24;
+  const ph = 28;
+  const px = x - pw / 2;
+  const py = y - ph / 2;
+
+  ctx.fillStyle = bgColor;
+  roundRect(ctx, px, py, pw, ph, 14);
+  ctx.fill();
+
+  ctx.fillStyle = textColor;
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x, y + 5);
+}
+
+/**
+ * Draw the share card directly on a Canvas — 100% reliable, no html2canvas
+ */
+function generateShareImage(data: ShareCardData): Promise<Blob | null> {
+  const W = 720;
+  const H = 960;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return Promise.resolve(null);
+
+  const bg = '#1B3A4B';
+  const accent = '#fcd34d';
+  const dim = 'rgba(245, 240, 232, 0.5)';
+  const line = 'rgba(245, 240, 232, 0.12)';
+  const white = '#F5F0E8';
+
+  // ── Background ──
+  ctx.fillStyle = bg;
+  roundRect(ctx, 0, 0, W, H, 24);
+  ctx.fill();
+
+  // ── Decorative top line ──
+  ctx.fillStyle = accent;
+  ctx.fillRect(60, 40, W - 120, 3);
+
+  // ── "AIRE LIBRE" header ──
+  ctx.font = 'bold 14px Georgia, serif';
+  ctx.fillStyle = 'rgba(245, 240, 232, 0.4)';
+  ctx.textAlign = 'center';
+  ctx.fillText('A I R E   L I B R E', W / 2, 72);
+
+  // ── Emoji ──
+  ctx.font = '64px serif';
+  ctx.fillText(data.birdEmoji, W / 2, 140);
+
+  // ── Bird name ──
+  ctx.font = 'bold 34px Georgia, serif';
+  ctx.fillStyle = accent;
+  ctx.fillText(data.birdName, W / 2, 185);
+
+  // ── Subtitle ──
+  ctx.font = '15px Georgia, serif';
+  ctx.fillStyle = dim;
+  ctx.fillText(data.subtitle, W / 2, 212);
+
+  // ── Axis pills ──
+  drawPill(ctx, `Contexto: ${data.contextoLabel}`, W / 2 - 120, 248, 'rgba(139, 92, 246, 0.25)', '#c4b5fd');
+  drawPill(ctx, `Individuo: ${data.individuoLabel}`, W / 2 + 120, 248, 'rgba(244, 114, 182, 0.25)', '#f9a8d4');
+
+  // ── Divider ──
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(60, 280);
+  ctx.lineTo(W - 60, 280);
+  ctx.stroke();
+
+  // ── Summary rows ──
+  const startY = 316;
+  const rowH = 48;
+
+  data.rows.forEach((row, i) => {
+    const y = startY + i * rowH;
+
+    // Label
+    ctx.font = '16px Georgia, serif';
+    ctx.fillStyle = dim;
+    ctx.textAlign = 'left';
+    ctx.fillText(row.label, 72, y);
+
+    // Value
+    ctx.font = 'bold 16px Georgia, serif';
+    ctx.fillStyle = white;
+    ctx.textAlign = 'right';
+    ctx.fillText(row.value, W - 72, y);
+
+    // Row separator
+    if (i < data.rows.length - 1) {
+      ctx.strokeStyle = line;
+      ctx.beginPath();
+      ctx.moveTo(72, y + 16);
+      ctx.lineTo(W - 72, y + 16);
+      ctx.stroke();
+    }
+  });
+
+  // ── Footer area ──
+  const footerY = startY + data.rows.length * rowH + 24;
+
+  ctx.strokeStyle = line;
+  ctx.beginPath();
+  ctx.moveTo(60, footerY);
+  ctx.lineTo(W - 60, footerY);
+  ctx.stroke();
+
+  // Branding
+  ctx.font = '12px Georgia, serif';
+  ctx.fillStyle = 'rgba(245, 240, 232, 0.3)';
+  ctx.textAlign = 'center';
+  ctx.fillText('aire-libre-tawny.vercel.app/quiz', W / 2, footerY + 28);
+
+  // CTA
+  ctx.font = 'bold 16px Georgia, serif';
+  ctx.fillStyle = accent;
+  ctx.fillText('¿Cuál eres tú? Haz el test →', W / 2, footerY + 58);
+
+  // ── Bottom decorative line ──
+  ctx.fillStyle = accent;
+  ctx.fillRect(60, H - 40, W - 120, 3);
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
+  });
+}
+
+/**
+ * Generate image and share/download
+ * Mobile: uses Web Share API (native share sheet with image)
+ * Desktop: always downloads the PNG directly
+ */
+async function shareAsImage(
+  data: ShareCardData,
+  bird: BirdProfile,
+  total: number
+): Promise<'shared' | 'downloaded' | 'error'> {
+  const blob = await generateShareImage(data);
+  if (!blob) return 'error';
+
+  // Detect mobile (touch device + small screen)
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 0 && window.innerWidth < 768);
+
+  // Mobile: use Web Share API for native share sheet
+  if (isMobile && navigator.share) {
+    const file = new File([blob], 'aire-libre-resultado.png', { type: 'image/png' });
+    const shareText = getShareText(bird, total);
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ text: shareText, files: [file] });
+        return 'shared';
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return 'shared';
+      }
+    }
+  }
+
+  // Desktop: always download directly
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'aire-libre-resultado.png';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return 'downloaded';
+}
+
+/**
+ * Share to Twitter
+ */
 function shareToTwitter(bird: BirdProfile, total: number) {
-  const text = encodeURIComponent(getShareText(bird, total));
+  const text = encodeURIComponent(
+    `Hice el test de Aire Libre y soy un ${bird.name} 🐦 (${total}/20). ¿Cuál eres tú? Descúbrelo en`
+  );
   const url = encodeURIComponent(`${SITE_URL}/quiz`);
   window.open(
     `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
@@ -73,26 +291,16 @@ function shareToTwitter(bird: BirdProfile, total: number) {
   );
 }
 
-function shareToFacebook(bird: BirdProfile, total: number) {
+/**
+ * Share to Facebook
+ */
+function shareToFacebook() {
   const url = encodeURIComponent(`${SITE_URL}/quiz`);
-  // Facebook sharer uses the URL's og:tags for content
   window.open(
-    `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${encodeURIComponent(
-      getShareText(bird, total)
-    )}`,
+    `https://www.facebook.com/sharer/sharer.php?u=${url}`,
     '_blank',
     'width=600,height=400'
   );
-}
-
-async function copyForInstagram(bird: BirdProfile, total: number) {
-  const text = `${getShareText(bird, total)} ${SITE_URL}/quiz`;
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 // ============================================================
@@ -278,6 +486,18 @@ const s = (p: Palette) => ({
     transition: 'all 0.25s ease',
     backdropFilter: 'blur(8px)',
   },
+  shareBtnPrimary: {
+    padding: '14px 28px',
+    fontSize: '15px',
+    fontWeight: 700,
+    fontFamily: "'Lora', Georgia, serif",
+    color: p.bg,
+    backgroundColor: p.accent,
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    transition: 'all 0.25s ease',
+  },
   summaryRow: {
     display: 'flex' as const,
     justifyContent: 'space-between' as const,
@@ -311,7 +531,7 @@ const QuizResult: React.FC = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [animKey, setAnimKey] = useState(0);
-  const [igCopied, setIgCopied] = useState(false);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   // Load data
   const answers: QuizAnswers = useMemo(() => {
@@ -354,15 +574,53 @@ const QuizResult: React.FC = () => {
     return q?.options?.find((o) => o.value === val)?.label || val;
   };
 
-  // Navigate to map with CP
   const goToMap = useCallback(() => {
     const cp = answers.codigoPostal as string;
-    if (cp) {
-      navigate(`/map?cp=${encodeURIComponent(cp)}`);
-    } else {
-      navigate('/map');
-    }
+    navigate(cp ? `/map?cp=${encodeURIComponent(cp)}` : '/map');
   }, [answers, navigate]);
+
+  // Share as image handler — uses Canvas API directly
+  const handleShareImage = useCallback(async () => {
+    setShareStatus('Generando imagen...');
+
+    const fumaVal = answers.fuma as string;
+    const ejVal = answers.ejercicio as string;
+    const conds = (answers.condicionesSalud as string[]) || [];
+    const hasConds = conds.length > 0 && !conds.includes('ninguna');
+    const condLabel = hasConds
+      ? conds.map((c) => getLabel('condicionesSalud', c)).join(', ')
+      : 'Ninguna';
+    const edadLabel = getLabel('edad', answers.edad as string);
+    const ctxLabels = ['Favorable', 'Moderado', 'Perjudicial'];
+    const indLabels = ['Resistente', 'Medianamente resistente', 'Altamente sensible'];
+
+    const cardData: ShareCardData = {
+      birdEmoji: result.bird.emoji,
+      birdName: result.bird.name,
+      subtitle: result.bird.subtitle,
+      contextoLabel: ctxLabels[result.contexto.category],
+      individuoLabel: indLabels[result.individuo.category],
+      rows: [
+        { label: 'Código postal', value: String(answers.codigoPostal) },
+        { label: 'Zona', value: `Riesgo ${colonia?.categoria_riesgo ?? 'medio'}` },
+        { label: 'Aire diario', value: `${dailyAir.toLocaleString()} L` },
+        { label: 'Edad', value: edadLabel },
+        { label: 'Tabaco', value: fumaVal === 'fuma' ? 'Sí' : fumaVal === 'exfumador' ? 'Ex' : 'No' },
+        { label: 'Ejercicio', value: getLabel('ejercicio', ejVal) },
+        { label: 'Condiciones', value: condLabel },
+      ],
+    };
+
+    const status = await shareAsImage(cardData, result.bird, result.total);
+    if (status === 'shared') {
+      setShareStatus('¡Compartido!');
+    } else if (status === 'downloaded') {
+      setShareStatus('¡Imagen descargada! Compártela en tus redes.');
+    } else {
+      setShareStatus('Error al generar imagen');
+    }
+    setTimeout(() => setShareStatus(null), 3000);
+  }, [result, answers, colonia, dailyAir]);
 
   // --------------------------------------------------------
   // Build slides
@@ -416,8 +674,7 @@ const QuizResult: React.FC = () => {
               </p>
             ) : (
               <p style={s(p1).body}>
-                Tu zona tiene un nivel de exposición ambiental{' '}
-                <span style={s(p1).accent}>{cpRiskLevel}</span>.
+                Tu zona tiene un nivel de exposición ambiental <span style={s(p1).accent}>{cpRiskLevel}</span>.
               </p>
             )}
           </FadeIn>
@@ -434,14 +691,11 @@ const QuizResult: React.FC = () => {
           <FadeIn delay={200}>
             <div style={s(p2).small}>Cada día respiras aproximadamente</div>
             <div style={s(p2).bigNum}>{dailyAir.toLocaleString()}</div>
-            <div style={{ fontSize: '22px', opacity: 0.6, marginTop: '-8px', marginBottom: '24px' }}>
-              litros de aire
-            </div>
+            <div style={{ fontSize: '22px', opacity: 0.6, marginTop: '-8px', marginBottom: '24px' }}>litros de aire</div>
           </FadeIn>
           <FadeIn delay={600}>
             <p style={s(p2).body}>
-              Eso equivale a aproximadamente{' '}
-              <span style={s(p2).accent}>{Math.round(dailyAir / 1000)} mil</span> litros.
+              Eso equivale a aproximadamente <span style={s(p2).accent}>{Math.round(dailyAir / 1000)} mil</span> litros.
               La calidad de ese aire importa más de lo que crees.
             </p>
           </FadeIn>
@@ -486,10 +740,10 @@ const QuizResult: React.FC = () => {
           <FadeIn delay={500}>
             <p style={s(p4).body}>
               {fumaVal === 'fuma'
-                ? 'Las personas que fuman tienen hasta 3 veces más riesgo de afectaciones por la calidad del aire. Cada cigarrillo amplifica el daño de los contaminantes ambientales.'
+                ? 'Las personas que fuman tienen hasta 3 veces más riesgo de afectaciones por la calidad del aire.'
                 : fumaVal === 'exfumador'
-                ? 'Haber dejado de fumar es un gran paso. Tu cuerpo se está recuperando, aunque puede haber vulnerabilidad residual.'
-                : 'No fumar reduce significativamente tu riesgo. Tienes hasta 3 veces menos riesgo que las personas que fuman.'}
+                ? 'Haber dejado de fumar es un gran paso. Tu cuerpo se está recuperando.'
+                : 'No fumar reduce significativamente tu riesgo. Tienes hasta 3 veces menos riesgo.'}
             </p>
           </FadeIn>
         </div>
@@ -505,16 +759,16 @@ const QuizResult: React.FC = () => {
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}>
             <div style={s(p5).title}>
-              {ejVal === '3omas' ? '¡Activo/a!' : ejVal === '1a2' ? 'Algo de movimiento' : 'Sin ejercicio regular'}
+              {ejVal === '2omas' ? '¡Activo/a!' : ejVal === 'aveces' ? 'Algo de movimiento' : 'Sin ejercicio regular'}
             </div>
           </FadeIn>
           <FadeIn delay={500}>
             <p style={s(p5).body}>
-              {ejVal === '3omas'
-                ? '¡Tu capacidad pulmonar y salud general son mejores gracias al ejercicio! Eso sí, intenta hacerlo en horarios y zonas con mejor calidad del aire.'
-                : ejVal === '1a2'
-                ? 'Algo de ejercicio es mejor que nada. Mover el cuerpo fortalece tus pulmones y tu salud general.'
-                : 'El ejercicio regular mejora tu capacidad pulmonar y tu resistencia a los contaminantes. Incluso caminatas cortas cuentan.'}
+              {ejVal === '2omas'
+                ? '¡Tu capacidad pulmonar y salud general son mejores! Intenta hacerlo en horarios con mejor calidad del aire.'
+                : ejVal === 'aveces'
+                ? 'Algo de ejercicio es mejor que nada. Mover el cuerpo fortalece tus pulmones.'
+                : 'El ejercicio regular mejora tu capacidad pulmonar. Incluso caminatas cortas cuentan.'}
             </p>
           </FadeIn>
         </div>
@@ -531,7 +785,7 @@ const QuizResult: React.FC = () => {
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}>
             <div style={s(p6).title}>
-              {hasConds ? 'Tu cuerpo necesita atención extra' : '¡Estás súper sano/a!'}
+              {hasConds ? 'Tu cuerpo necesita atención extra' : '¡Sin condiciones preexistentes!'}
             </div>
           </FadeIn>
           <FadeIn delay={500}>
@@ -546,7 +800,7 @@ const QuizResult: React.FC = () => {
               </div>
             ) : (
               <p style={s(p6).body}>
-                ¡Felicidades! No reportas condiciones de salud preexistentes. Mantener hábitos saludables es la mejor forma de protegerte.
+                No reportas condiciones preexistentes. Mantener hábitos saludables es la mejor forma de protegerte.
               </p>
             )}
           </FadeIn>
@@ -556,31 +810,34 @@ const QuizResult: React.FC = () => {
 
     // 8 — Score breakdown
     const p7 = slidePalettes[7];
+    const contextoLabel = ['Favorable', 'Moderado', 'Perjudicial'][result.contexto.category];
+    const individuoLabel = ['Resistente', 'Medianamente resistente', 'Altamente sensible'][result.individuo.category];
     out.push({
       palette: p7,
       content: (
         <div style={{ textAlign: 'center', width: '100%', maxWidth: '480px' }}>
           <FadeIn delay={200}>
-            <div style={s(p7).small}>Tu puntaje total</div>
+            <div style={s(p7).small}>Tu resultado</div>
             <div style={s(p7).bigNum}>
-              {result.total}<span style={{ fontSize: '32px', opacity: 0.4 }}>/20</span>
+              {result.bird.emoji}
             </div>
+            <div style={{ ...s(p7).birdName, marginBottom: '20px' }}>{result.bird.name}</div>
           </FadeIn>
           <FadeIn delay={400}>
             <div style={{ marginBottom: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.6, marginBottom: '4px' }}>
-                <span>Exposición</span><span>{result.exposure}/10</span>
+                <span>Contexto</span><span>{contextoLabel} ({result.contexto.raw}/6)</span>
               </div>
               <div style={s(p7).bar}>
-                <div style={{ ...s(p7).barFill, width: `${(result.exposure / 10) * 100}%` }} />
+                <div style={{ ...s(p7).barFill, width: `${(result.contexto.raw / 6) * 100}%` }} />
               </div>
             </div>
             <div style={{ marginBottom: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.6, marginBottom: '4px' }}>
-                <span>Vulnerabilidad</span><span>{result.vulnerability}/10</span>
+                <span>Individuo</span><span>{individuoLabel} ({result.individuo.raw}/7)</span>
               </div>
               <div style={s(p7).bar}>
-                <div style={{ ...s(p7).barFill, width: `${(result.vulnerability / 10) * 100}%` }} />
+                <div style={{ ...s(p7).barFill, width: `${(result.individuo.raw / 7) * 100}%` }} />
               </div>
             </div>
           </FadeIn>
@@ -602,15 +859,23 @@ const QuizResult: React.FC = () => {
       palette: p8,
       content: (
         <div style={{ textAlign: 'center', width: '100%', maxWidth: '480px' }}>
-          <FadeIn delay={200}>
-            <div style={{ fontSize: '64px', marginBottom: '8px' }}>{result.bird.emoji}</div>
-            <div style={{ ...s(p8).birdName, fontSize: '36px' }}>{result.bird.name}</div>
-            <div style={{ fontSize: '14px', opacity: 0.5, marginBottom: '24px' }}>
-              {result.total}/20 — {result.bird.subtitle}
+          {/* ====== CAPTURABLE CARD — this div gets screenshot'd ====== */}
+          <div
+            style={{
+              backgroundColor: p8.bg,
+              padding: '40px 32px 32px',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '440px',
+              margin: '0 auto',
+            }}
+          >
+            <div style={{ fontSize: '56px', marginBottom: '4px' }}>{result.bird.emoji}</div>
+            <div style={{ ...s(p8).birdName, fontSize: '32px', marginBottom: '4px' }}>{result.bird.name}</div>
+            <div style={{ fontSize: '13px', opacity: 0.5, marginBottom: '20px', color: p8.text }}>
+              {result.bird.subtitle}
             </div>
-          </FadeIn>
 
-          <FadeIn delay={400}>
             <div style={{ width: '100%' }}>
               <div style={s(p8).summaryRow}>
                 <span style={s(p8).summaryLabel}>Código postal</span>
@@ -645,13 +910,45 @@ const QuizResult: React.FC = () => {
                 </span>
               </div>
             </div>
-          </FadeIn>
 
-          {/* Share buttons */}
-          <FadeIn delay={700}>
-            <div style={{ marginTop: '28px', marginBottom: '8px' }}>
+            {/* Branding footer inside card */}
+            <div style={{
+              marginTop: '20px',
+              paddingTop: '16px',
+              borderTop: '1px solid rgba(255,255,255,0.1)',
+              fontSize: '12px',
+              opacity: 0.4,
+              color: p8.text,
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase' as const,
+            }}>
+              AIRE LIBRE — aire-libre-tawny.vercel.app/quiz
+            </div>
+          </div>
+          {/* ====== END CAPTURABLE CARD ====== */}
+
+          {/* Share buttons — outside the card so they don't appear in screenshot */}
+          <FadeIn delay={600}>
+            <div style={{ marginTop: '24px', marginBottom: '8px' }}>
               <div style={s(p8).small}>Comparte tu resultado</div>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' as const }}>
+
+              {/* Primary: share as image (mobile) or download */}
+              <button
+                style={s(p8).shareBtnPrimary}
+                onClick={handleShareImage}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+              >
+                📸 Compartir como imagen
+              </button>
+
+              {shareStatus && (
+                <div style={{ fontSize: '13px', opacity: 0.7, marginTop: '8px', color: p8.accent }}>
+                  {shareStatus}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '12px', flexWrap: 'wrap' as const }}>
                 <button
                   style={s(p8).shareBtn}
                   onClick={() => shareToTwitter(result.bird, result.total)}
@@ -662,34 +959,20 @@ const QuizResult: React.FC = () => {
                 </button>
                 <button
                   style={s(p8).shareBtn}
-                  onClick={() => shareToFacebook(result.bird, result.total)}
+                  onClick={() => shareToFacebook()}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
                 >
                   Facebook
                 </button>
-                <button
-                  style={s(p8).shareBtn}
-                  onClick={async () => {
-                    const ok = await copyForInstagram(result.bird, result.total);
-                    if (ok) {
-                      setIgCopied(true);
-                      setTimeout(() => setIgCopied(false), 2000);
-                    }
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
-                >
-                  {igCopied ? '✓ Copiado' : 'Instagram (copiar)'}
-                </button>
               </div>
             </div>
           </FadeIn>
 
-          {/* CTA to map */}
-          <FadeIn delay={900}>
+          {/* CTA */}
+          <FadeIn delay={800}>
             <button
-              style={{ ...s(p8).cta, marginTop: '24px' }}
+              style={{ ...s(p8).cta, marginTop: '16px' }}
               onClick={goToMap}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -708,7 +991,7 @@ const QuizResult: React.FC = () => {
     });
 
     return out;
-  }, [answers, result, dailyAir, cpRiskLevel, colonia, goToMap, igCopied]);
+  }, [answers, result, dailyAir, cpRiskLevel, colonia, goToMap, handleShareImage, shareStatus]);
 
   // Navigation
   const total = slides.length;
@@ -723,7 +1006,7 @@ const QuizResult: React.FC = () => {
     [total]
   );
 
-  // Keyboard + Enter
+  // Keyboard — arrows + Enter + Space
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
@@ -782,9 +1065,7 @@ const QuizResult: React.FC = () => {
           onClick={() => goTo(currentSlide - 1)}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}
-        >
-          ‹
-        </button>
+        >‹</button>
       )}
       {currentSlide < total - 1 && (
         <button
@@ -792,9 +1073,7 @@ const QuizResult: React.FC = () => {
           onClick={() => goTo(currentSlide + 1)}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}
-        >
-          ›
-        </button>
+        >›</button>
       )}
 
       <div style={st.dots}>
