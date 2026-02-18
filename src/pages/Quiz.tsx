@@ -324,7 +324,7 @@ const FadeIn: React.FC<{ children: React.ReactNode; delay?: number }> = ({
 // Quiz Component
 // ============================================================
 
-type Screen = 'welcome' | 'blockIntro' | 'question';
+type Screen = 'welcome' | 'blockIntro' | 'question' | 'airCalcPrompt' | 'airCalcInput';
 
 const Quiz: React.FC = () => {
   const navigate = useNavigate();
@@ -406,7 +406,7 @@ const Quiz: React.FC = () => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
-  const saveAndFinish = useCallback(
+  const finishQuiz = useCallback(
     (finalAnswers: QuizAnswers) => {
       sessionStorage.setItem('quizAnswers', JSON.stringify(finalAnswers));
       if (cpColonia) {
@@ -415,6 +415,16 @@ const Quiz: React.FC = () => {
       navigate('/quiz/resultado');
     },
     [cpColonia, navigate]
+  );
+
+  const saveAndFinish = useCallback(
+    (finalAnswers: QuizAnswers) => {
+      // Instead of navigating, show air calculator prompt
+      setAnswers(finalAnswers);
+      setScreen('airCalcPrompt');
+      setAnimKey((k) => k + 1);
+    },
+    []
   );
 
   // Core advance function with lock
@@ -591,6 +601,184 @@ const Quiz: React.FC = () => {
           >
             Continuar
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --------------------------------------------------------
+  // Air Calculator Prompt — "¿Quieres saber cuánto aire respiras?"
+  // --------------------------------------------------------
+  if (screen === 'airCalcPrompt') {
+    return (
+      <div style={styles.container}>
+        <div style={styles.progressBarContainer}>
+          <div style={{ ...styles.progressBarFill, width: '100%' }} />
+        </div>
+        <div style={styles.header}>
+          <div style={styles.logo}>AIRE LIBRE</div>
+        </div>
+        <div style={{ ...styles.content, justifyContent: 'center' }}>
+          <FadeIn key={`air-prompt-${animKey}`}>
+            <div style={{ textAlign: 'center', maxWidth: '520px', padding: '0 24px' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌬️</div>
+              <h2 style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: '28px',
+                fontWeight: 700,
+                color: '#2D2D2D',
+                marginBottom: '16px',
+                lineHeight: 1.3,
+              }}>
+                ¿Quieres saber cuánto aire respiras al día?
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                color: '#8B7E74',
+                lineHeight: 1.7,
+                marginBottom: '8px',
+              }}>
+                Con tu peso y estatura podemos calcular cuántos litros de aire inhala tu cuerpo cada día.
+              </p>
+              <p style={{
+                fontSize: '13px',
+                color: '#A09689',
+                fontStyle: 'italic',
+                marginBottom: '32px',
+              }}>
+                Estos datos no se almacenan y solo se usan para el cálculo.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+                <button
+                  style={styles.btnStart}
+                  onClick={() => { setScreen('airCalcInput'); setAnimKey((k) => k + 1); }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(166, 44, 43, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  Sí, quiero saber
+                </button>
+                <button
+                  style={{
+                    ...styles.btnBack,
+                    fontSize: '15px',
+                    padding: '12px 32px',
+                  }}
+                  onClick={() => finishQuiz(answers)}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; e.currentTarget.style.color = '#A62C2B'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#D4CBC0'; e.currentTarget.style.color = '#8B7E74'; }}
+                >
+                  No, ver mis resultados
+                </button>
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </div>
+    );
+  }
+
+  // --------------------------------------------------------
+  // Air Calculator Input — peso + estatura
+  // --------------------------------------------------------
+  if (screen === 'airCalcInput') {
+    const pesoVal = (answers.peso as string) || '';
+    const estaturaVal = (answers.estatura as string) || '';
+    const bothFilled = pesoVal.length > 0 && estaturaVal.length > 0;
+
+    return (
+      <div style={styles.container}>
+        <div style={styles.progressBarContainer}>
+          <div style={{ ...styles.progressBarFill, width: '100%' }} />
+        </div>
+        <div style={styles.header}>
+          <div style={styles.logo}>AIRE LIBRE</div>
+        </div>
+        <div style={{ ...styles.content, justifyContent: 'center' }}>
+          <FadeIn key={`air-input-${animKey}`}>
+            <div style={{ textAlign: 'center', maxWidth: '420px', padding: '0 24px' }}>
+              <div style={{ fontSize: '36px', marginBottom: '12px' }}>🌬️</div>
+              <h2 style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#2D2D2D',
+                marginBottom: '24px',
+              }}>
+                Calculadora de aire
+              </h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+                <div style={styles.inputWrapper}>
+                  <label style={{ fontSize: '14px', color: '#8B7E74', marginBottom: '6px', display: 'block', textAlign: 'left' }}>¿Cuánto pesas?</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="number"
+                      style={styles.inputField}
+                      placeholder="Ej: 70"
+                      value={pesoVal}
+                      onChange={(e) => handleInputChange('peso', e.target.value)}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(166, 44, 43, 0.2)'; }}
+                      autoFocus
+                    />
+                    <span style={styles.inputSuffix}>kg</span>
+                  </div>
+                </div>
+
+                <div style={styles.inputWrapper}>
+                  <label style={{ fontSize: '14px', color: '#8B7E74', marginBottom: '6px', display: 'block', textAlign: 'left' }}>¿Cuántos centímetros mides?</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="number"
+                      style={styles.inputField}
+                      placeholder="Ej: 170"
+                      value={estaturaVal}
+                      onChange={(e) => handleInputChange('estatura', e.target.value)}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(166, 44, 43, 0.2)'; }}
+                    />
+                    <span style={styles.inputSuffix}>cm</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                style={{ ...styles.btnStart, ...(!bothFilled ? styles.btnDisabled : {}) }}
+                onClick={bothFilled ? () => finishQuiz(answers) : undefined}
+                onMouseEnter={(e) => {
+                  if (bothFilled) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(166, 44, 43, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                Ver mis resultados
+              </button>
+              <button
+                style={{
+                  ...styles.btnBack,
+                  fontSize: '14px',
+                  padding: '10px 24px',
+                  marginTop: '12px',
+                }}
+                onClick={() => { setScreen('airCalcPrompt'); setAnimKey((k) => k + 1); }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; e.currentTarget.style.color = '#A62C2B'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#D4CBC0'; e.currentTarget.style.color = '#8B7E74'; }}
+              >
+                Atrás
+              </button>
+            </div>
+          </FadeIn>
         </div>
       </div>
     );

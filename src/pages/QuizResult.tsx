@@ -563,11 +563,14 @@ const QuizResult: React.FC = () => {
     [cpRiskLevel, answers]
   );
 
+  const hasPesoEstatura = !!(answers.peso && answers.estatura);
+
   const dailyAir = useMemo(() => {
+    if (!hasPesoEstatura) return null;
     const peso = parseFloat(answers.peso as string) || 70;
     const estatura = parseFloat(answers.estatura as string) || 170;
     return calculateDailyAir(peso, estatura, answers.edad as string, answers.ejercicio as string);
-  }, [answers]);
+  }, [answers, hasPesoEstatura]);
 
   const getLabel = (qId: string, val: string): string => {
     const q = quizQuestions.find((q) => q.id === qId);
@@ -594,21 +597,27 @@ const QuizResult: React.FC = () => {
     const ctxLabels = ['Favorable', 'Moderado', 'Perjudicial'];
     const indLabels = ['Resistente', 'Medianamente resistente', 'Altamente sensible'];
 
+    const rows = [
+      { label: 'Código postal', value: String(answers.codigoPostal) },
+      { label: 'Zona', value: `Riesgo ${colonia?.categoria_riesgo ?? 'medio'}` },
+    ];
+    if (dailyAir) {
+      rows.push({ label: 'Aire diario', value: `${dailyAir.toLocaleString()} L` });
+    }
+    rows.push(
+      { label: 'Edad', value: edadLabel },
+      { label: 'Tabaco', value: fumaVal === 'fuma' ? 'Sí' : fumaVal === 'exfumador' ? 'Ex' : 'No' },
+      { label: 'Ejercicio', value: getLabel('ejercicio', ejVal) },
+      { label: 'Condiciones', value: condLabel },
+    );
+
     const cardData: ShareCardData = {
       birdEmoji: result.bird.emoji,
       birdName: result.bird.name,
       subtitle: result.bird.subtitle,
       contextoLabel: ctxLabels[result.contexto.category],
       individuoLabel: indLabels[result.individuo.category],
-      rows: [
-        { label: 'Código postal', value: String(answers.codigoPostal) },
-        { label: 'Zona', value: `Riesgo ${colonia?.categoria_riesgo ?? 'medio'}` },
-        { label: 'Aire diario', value: `${dailyAir.toLocaleString()} L` },
-        { label: 'Edad', value: edadLabel },
-        { label: 'Tabaco', value: fumaVal === 'fuma' ? 'Sí' : fumaVal === 'exfumador' ? 'Ex' : 'No' },
-        { label: 'Ejercicio', value: getLabel('ejercicio', ejVal) },
-        { label: 'Condiciones', value: condLabel },
-      ],
+      rows,
     };
 
     const status = await shareAsImage(cardData, result.bird, result.total);
@@ -682,26 +691,28 @@ const QuizResult: React.FC = () => {
       ),
     });
 
-    // 3 — Litros de aire
-    const p2 = slidePalettes[2];
-    out.push({
-      palette: p2,
-      content: (
-        <div style={{ textAlign: 'center' }}>
-          <FadeIn delay={200}>
-            <div style={s(p2).small}>Cada día respiras aproximadamente</div>
-            <div style={s(p2).bigNum}>{dailyAir.toLocaleString()}</div>
-            <div style={{ fontSize: '22px', opacity: 0.6, marginTop: '-8px', marginBottom: '24px' }}>litros de aire</div>
-          </FadeIn>
-          <FadeIn delay={600}>
-            <p style={s(p2).body}>
-              Eso equivale a aproximadamente <span style={s(p2).accent}>{Math.round(dailyAir / 1000)} mil</span> litros.
-              La calidad de ese aire importa más de lo que crees.
-            </p>
-          </FadeIn>
-        </div>
-      ),
-    });
+    // 3 — Litros de aire (only if user provided peso + estatura)
+    if (dailyAir) {
+      const p2 = slidePalettes[2];
+      out.push({
+        palette: p2,
+        content: (
+          <div style={{ textAlign: 'center' }}>
+            <FadeIn delay={200}>
+              <div style={s(p2).small}>Cada día respiras aproximadamente</div>
+              <div style={s(p2).bigNum}>{dailyAir.toLocaleString()}</div>
+              <div style={{ fontSize: '22px', opacity: 0.6, marginTop: '-8px', marginBottom: '24px' }}>litros de aire</div>
+            </FadeIn>
+            <FadeIn delay={600}>
+              <p style={s(p2).body}>
+                Eso equivale a aproximadamente <span style={s(p2).accent}>{Math.round(dailyAir / 1000)} mil</span> litros.
+                La calidad de ese aire importa más de lo que crees.
+              </p>
+            </FadeIn>
+          </div>
+        ),
+      });
+    }
 
     // 4 — Edad
     const p3 = slidePalettes[3];
@@ -885,10 +896,12 @@ const QuizResult: React.FC = () => {
                 <span style={s(p8).summaryLabel}>Zona</span>
                 <span style={s(p8).summaryValue}>Riesgo {cpRiskLevel}</span>
               </div>
-              <div style={s(p8).summaryRow}>
-                <span style={s(p8).summaryLabel}>Aire diario</span>
-                <span style={s(p8).summaryValue}>{dailyAir.toLocaleString()} L</span>
-              </div>
+              {dailyAir && (
+                <div style={s(p8).summaryRow}>
+                  <span style={s(p8).summaryLabel}>Aire diario</span>
+                  <span style={s(p8).summaryValue}>{dailyAir.toLocaleString()} L</span>
+                </div>
+              )}
               <div style={s(p8).summaryRow}>
                 <span style={s(p8).summaryLabel}>Edad</span>
                 <span style={s(p8).summaryValue}>{edadLabel}</span>
