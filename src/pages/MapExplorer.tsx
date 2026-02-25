@@ -4,51 +4,120 @@ import MapView from '../components/Map/MapView';
 import { coloniaService } from '../services/coloniaService';
 import type { Colonia } from '../types';
 
-type FiltroRiesgo = 'todos' | 'bajo' | 'medio' | 'alto';
+type FiltroCumplimiento = 'todos' | 'bajo' | 'medio' | 'alto';
 
-// ============================================================
-// Tooltip content — from Contenidos_de_la_metaficha.pdf
-// ============================================================
-
-const TOOLTIPS: Record<string, string> = {
-  'contaminantes': `Hay muchos contaminantes en el aire que afectan nuestra salud, como el Ozono, el material particulado (PM), el bióxido de azufre, el óxido de nitrógeno o el monóxido de carbono.\n\nAquí proyectamos información sobre dos principales en la CDMX: el ozono y el material particulado 2.5 (PM2.5).`,
-
-  'pm25': `¿Qué es el PM2.5?\n\nEl PM2.5 son partículas contaminantes muy pequeñas que flotan en el aire y miden menos de 2.5 micrómetros (¡más delgadas que un cabello humano!). Pueden incluir polvo, hollín, metales pesados y sustancias químicas orgánicas.\n\nFuentes principales: emisiones vehiculares (especialmente motor a diésel), automóviles y camiones, fábricas, quema de madera y combustibles fósiles, actividades de construcción y polvo suspendido.\n\nEfectos en la salud: Las PM2.5 penetran profundamente en los pulmones y causan problemas como accidentes cardiovasculares, enfermedades respiratorias crónicas, cáncer de pulmón y otras enfermedades.`,
-
-  'ozono': `¿Qué es el ozono?\n\nOzono (O₃): El componente invisible del smog. Se forma cuando contaminantes emitidos por vehículos, industrias y otras fuentes reaccionan químicamente bajo la luz solar. Los niveles de ozono son más elevados durante las tardes y en días calurosos y soleados.\n\nFuentes principales: Vehículos automotores, aviones, trenes, emisiones industriales, actividades de construcción, granjas, tintorerías y el uso de solventes.\n\nEfectos en la salud: El ozono puede irritar los pulmones, causar inflamación y agravar enfermedades crónicas, incluso en niveles bajos de exposición.`,
-
-  'salud_general': `¿Por qué hablar de condiciones de salud?\n\nLa contaminación atmosférica es el mayor riesgo medioambiental para la salud en el mundo según la OMS, con más de 4.2 millones de muertes al año.\n\nNo todas las personas reaccionamos igual al mismo aire. Las enfermedades como la diabetes e hipertensión, o enfermedades respiratorias y cardiovasculares, hacen que el cuerpo sea más vulnerable a los efectos del aire contaminado y del calor urbano.\n\nEl riesgo es estructural, no individual.`,
-
-  'diabetes': `¿Cómo se relaciona la diabetes y la calidad del aire?\n\nLa relación es doble. Por un lado, las personas con diabetes son más vulnerables a los efectos del aire contaminado, especialmente a problemas del corazón y la circulación.\n\nPor otro lado, respirar aire contaminado durante largos periodos puede aumentar el riesgo de desarrollar diabetes tipo 2. Las partículas finas favorecen la inflamación y el estrés oxidativo, procesos que dificultan el uso de la insulina.`,
-
-  'hipertension': `¿Cómo se relaciona la hipertensión y la calidad del aire?\n\nVivir durante años en zonas con aire contaminado incrementa el riesgo de desarrollar hipertensión, incluso cuando los niveles de contaminación no parecen extremos.\n\nLas partículas que respiramos (PM2.5 y PM10) generan inflamación, alteran los vasos sanguíneos y afectan el equilibrio del sistema nervioso, haciendo que el cuerpo mantenga la presión más alta de lo normal.`,
-
-  'respiratorias': `¿Cómo se relacionan las enfermedades respiratorias crónicas y la calidad del aire?\n\nLa mala calidad del aire empeora los síntomas de personas con asma, EPOC o bronquitis crónica. Las partículas finas, el ozono y otros contaminantes irritan las vías respiratorias, aumentan la inflamación y provocan crisis más frecuentes.\n\nRespirar aire contaminado durante años daña progresivamente el tejido pulmonar y favorece la aparición de estas enfermedades incluso en personas sanas.`,
-
-  'cardiovasculares': `¿Cómo se relacionan las enfermedades cardiovasculares y la calidad del aire?\n\nLa contaminación del aire es una de las principales amenazas ambientales para el sistema cardiovascular. Respirar aire con altas concentraciones de partículas finas:\n\n• Aumenta el riesgo de infartos y arritmias\n• Favorece eventos cerebrovasculares\n• Eleva la mortalidad por enfermedades del corazón\n\nLas partículas entran por los pulmones, pasan a la sangre y provocan inflamación generalizada.`,
-
-  'subindice_salud': `🩺 ¿Qué es el subíndice de salud de la zona?\n\nEs un indicador compuesto que combina la presencia de diabetes, hipertensión, enfermedades respiratorias y cardiovasculares para estimar qué tan vulnerable es la población ante mala calidad del aire y calor extremo.\n\nPermite entender el riesgo acumulado, no solo la exposición.`,
-
-  'poblacion_sensible': `¿Quiénes son la población con mayor sensibilidad?\n\nLas infancias son más vulnerables porque sus sistemas respiratorio y nervioso aún están en desarrollo. Las personas mayores enfrentan un mayor riesgo debido al desgaste biológico natural.\n\nLas personas fumadoras también forman parte de la población más sensible, ya que sus pulmones están más expuestos al daño del aire contaminado.`,
-
-  'no_fumadores': `🚭 ¿Por qué importa saber cuántas personas no fuman en la zona?\n\nPorque fumar triplica el riesgo de muerte por enfermedades asociadas a la contaminación del aire. Una mayor proporción de no fumadores indica mejor resiliencia respiratoria y cardiovascular frente a contaminantes.`,
-
-  'derechohabiencia': `¿Qué es la derechohabiencia?\n\nEs el acceso a servicios médicos gratuitos por parte del estado. Indica el porcentaje de la población que cuenta con seguridad social o acceso a servicios de salud públicos.`,
-
-  'infraestructura': `¿Qué es la infraestructura sanitaria?\n\nMide la densidad de médicos y camas hospitalarias en comparación con el estándar de la OCDE. Una mayor infraestructura sanitaria significa mejor acceso a atención médica en la zona.`,
-
-  'proximidad_medica': `¿Qué es la proximidad a infraestructura médica?\n\nMide qué tan cerca se encuentran los centros de salud, hospitales y clínicas de la zona. Una mayor proximidad facilita el acceso oportuno a atención médica, especialmente durante emergencias relacionadas con la contaminación.`,
-
-  'socioeconomico': `🧭 ¿Por qué se incluyen indicadores socioeconómicos cuando hablamos de aire?\n\nPorque el impacto de la contaminación depende también de las condiciones de vida. El acceso a salud, información y vivienda adecuada influye en la capacidad de prevenir, atender y recuperarse de enfermedades.\n\nEl riesgo ambiental se distribuye de forma desigual.`,
-
-  'desarrollo': `🏙 ¿Qué nos dice el índice de desarrollo de la zona?\n\nResume condiciones de bienestar, servicios e infraestructura urbana. Ayuda a entender qué tan preparada está una comunidad para protegerse y adaptarse frente a riesgos ambientales como contaminación, calor y eventos extremos.`,
-
-  'cambio_climatico': `🌡 ¿Qué nos dice el subíndice de cambio climático?\n\nIntegra la exposición al calor urbano (isla de calor) y el riesgo de inundaciones para evaluar la vulnerabilidad climática de cada zona.`,
-
-  'frescura': `🌡 ¿Qué significa la frescura de una zona?\n\nIndica si un área es más caliente o más templada que su entorno urbano. Las zonas con poca vegetación y mucho concreto acumulan más calor, lo que intensifica los efectos de la contaminación y eleva el riesgo para la salud.`,
-
-  'inundaciones': `🌧 ¿Por qué se considera el riesgo de inundación?\n\nPorque revela fragilidad ambiental e infraestructura insuficiente. Las zonas con mayor riesgo de inundación suelen enfrentar también otras vulnerabilidades que afectan la salud y la estabilidad de la vida cotidiana.`,
+// DB categoria_riesgo → Cumplimiento (inverted)
+const getCumplimiento = (cat: string): string => {
+  switch (cat) { case 'bajo': return 'alto'; case 'medio': return 'medio'; case 'alto': return 'bajo'; default: return 'medio'; }
 };
+const getCumplColor = (cumpl: string) => {
+  switch (cumpl) { case 'alto': return '#22c55e'; case 'medio': return '#eab308'; case 'bajo': return '#ef4444'; default: return '#6b7280'; }
+};
+const cumplToRiesgo = (cumpl: string): string => {
+  switch (cumpl) { case 'alto': return 'bajo'; case 'medio': return 'medio'; case 'bajo': return 'alto'; default: return ''; }
+};
+
+// ============================================================
+// Tooltips — Metaficha v3
+// ============================================================
+const TOOLTIPS: Record<string, { title: string; body: string }> = {
+  'cumplimiento_bajo': {
+    title: 'Cumplimiento Bajo',
+    body: `Estar en una colonia con cumplimiento bajo significa formar parte del tercio de la ciudad donde ejercer derechos —como respirar aire limpio y acceder a servicios de salud— es más difícil. Aquí la calidad del aire se cruza con otros factores: infraestructura, acceso a atención médica, condiciones socioeconómicas y capacidad para resistir eventos climáticos extremos.\n\nY algo importante: esto no quiere decir que en el resto de la ciudad todo esté bien. Si observamos únicamente el aire, el 99% de los días en la Zona Metropolitana del Valle de México superan los niveles considerados saludables por la OMS.\n\nLa diferencia no es si hay problema o no.\nEs quién lo enfrenta con más desventaja.`
+  },
+  'cumplimiento_medio': {
+    title: 'Cumplimiento Medio',
+    body: `Una colonia con cumplimiento medio forma parte del tercio intermedio en la garantía de derechos dentro de la Zona Metropolitana del Valle de México. No se encuentra entre las zonas con mayores desventajas, pero tampoco entre aquellas con mejores condiciones.\n\nSin embargo, estar en el punto medio no equivale a vivir en condiciones óptimas. Incluso si consideramos solo la calidad del aire, el 99% de los días en la ciudad superan los niveles recomendados para proteger la salud.\n\nAquí la pregunta no es solo dónde estás.\nEs cuánto puede mejorar la ciudad en su conjunto.`
+  },
+  'cumplimiento_alto': {
+    title: 'Cumplimiento Alto',
+    body: `Una colonia con cumplimiento alto forma parte del tercio con mejores condiciones relativas en la garantía de derechos. Presenta mejores niveles comparativos en calidad del aire y en factores que influyen en el bienestar: infraestructura, acceso a servicios de salud, condiciones socioeconómicas y resiliencia frente al cambio climático.\n\nAun así, esto no significa que las condiciones sean plenamente saludables. Ninguna colonia de la ciudad está completamente libre de exposición a contaminantes.\n\nLa diferencia no es la ausencia de riesgo,\nsino la desigual distribución de sus impactos.`
+  },
+  'indice_equidad': {
+    title: 'Índice de Equidad',
+    body: `El Índice de Equidad evalúa qué tan cerca está tu colonia de ofrecer un entorno justo y saludable. Integra cuatro dimensiones: calidad del aire, salud, condiciones socioeconómicas y resiliencia frente al cambio climático.\n\nNo solo cuenta contaminantes; también analiza si el barrio tiene servicios de salud cercanos, infraestructura adecuada y capacidad para enfrentar olas de calor o inundaciones.\n\nEntre más alto el porcentaje, mejores son las condiciones para el bienestar. Un puntaje bajo no habla de las personas, sino de brechas estructurales que aumentan riesgos y desigualdades.`
+  },
+  'contaminantes': {
+    title: 'Exposición a Contaminantes',
+    body: `La contaminación del aire es hoy el mayor riesgo ambiental para la salud. Cada año provoca más de 4.2 millones de muertes en el mundo.\n\nEn el aire hay distintos contaminantes que pueden afectar nuestro cuerpo, como el ozono, el material particulado (PM), el bióxido de azufre, el óxido de nitrógeno y el monóxido de carbono. En esta plataforma nos enfocamos en dos de los más relevantes en la Ciudad de México: el ozono y el material particulado fino PM2.5.\n\nSon partículas y gases que no siempre vemos, pero que respiramos todos los días.`
+  },
+  'dias_pm25': {
+    title: 'Días al año con aire limpio (PM2.5)',
+    body: `Este indicador muestra el porcentaje de días al año en que los niveles de PM2.5 se mantienen por debajo del límite recomendado por la OMS.\n\n¿Qué es el PM2.5?\nSon partículas muy pequeñas que flotan en el aire (más delgadas que un cabello humano). Pueden estar compuestas por hollín, metales pesados, polvo y residuos de combustión.\n\nFuentes principales: emisiones vehiculares (especialmente motores a diésel), actividad industrial, quema de madera y combustibles fósiles, obras de construcción y polvo suspendido.\n\nDebido a su tamaño microscópico, pueden penetrar profundamente en los pulmones e incluso entrar al torrente sanguíneo. La exposición prolongada se asocia con enfermedades cardiovasculares, respiratorias crónicas y cáncer de pulmón.`
+  },
+  'calidad_pm25': {
+    title: 'Calidad del aire en días malos (PM2.5)',
+    body: `Muestra qué tan cerca está el aire de los niveles considerados seguros por la OMS.\n\n• 100% = aire saludable. Las concentraciones de PM2.5 están dentro del nivel recomendado.\n• 0% = aire muy peligroso. Las concentraciones están muy por encima de lo seguro.\n• Los valores intermedios indican qué tanto nos alejamos o acercamos al nivel saludable.\n\nCuando el porcentaje baja, significa que el cielo está más cargado de partículas invisibles que pueden afectar nuestra salud.`
+  },
+  'dias_ozono': {
+    title: 'Días al año con aire limpio (Ozono)',
+    body: `Muestra el porcentaje de días al año en que los niveles de ozono (O₃) se mantienen por debajo del límite recomendado por la OMS.\n\n¿Qué es el ozono?\nEl ozono a nivel del suelo es un contaminante secundario. Se forma cuando óxidos de nitrógeno y compuestos orgánicos volátiles reaccionan químicamente en presencia de radiación solar. Sus concentraciones suelen aumentar durante las tardes y en días calurosos.\n\nEl ozono es un oxidante fuerte que puede irritar las vías respiratorias, causar inflamación pulmonar y reducir la función respiratoria, incluso en niveles relativamente bajos.`
+  },
+  'calidad_ozono': {
+    title: 'Calidad del aire en días malos (Ozono)',
+    body: `Muestra qué tan cerca está el aire de los niveles considerados seguros por la OMS.\n\n• 100% = aire saludable. Las concentraciones de ozono están dentro del nivel recomendado.\n• 0% = aire muy peligroso. Las concentraciones están muy por encima de lo seguro.\n• Los valores intermedios indican qué tanto nos acercamos o alejamos del nivel saludable.`
+  },
+  'calificacion_aire': {
+    title: 'Calificación general del aire',
+    body: `Junta todos los indicadores anteriores y los convierte en una sola nota para entender qué tan saludable es el aire en ese lugar.\n\n100% = aire muy limpio → bajos niveles de contaminación y muchos días con aire seguro.\n0% = aire muy contaminado → altos niveles de contaminación y pocos días limpios.`
+  },
+  'salud_acceso': {
+    title: 'Condiciones de Salud y Acceso a Servicios Médicos',
+    body: `La contaminación del aire es el mayor riesgo ambiental para la salud según la OMS, con más de 4.2 millones de muertes al año.\n\nNo todas las personas reaccionamos igual ante el mismo aire. Existen condiciones de salud que aumentan la vulnerabilidad, como la diabetes, la hipertensión, y las enfermedades respiratorias o cardiovasculares.\n\nAdemás, no todas las colonias cuentan con el mismo acceso a clínicas, hospitales o servicios médicos públicos.\n\nIncorporar estas dimensiones permite entender por qué dos colonias con niveles similares de contaminación pueden enfrentar impactos distintos. El riesgo no es solo ambiental: también es estructural.`
+  },
+  'pob_sensible_edad': {
+    title: 'Población sensible por edad',
+    body: `No todas las edades enfrentan el mismo riesgo. Las infancias menores de 12 años y las personas mayores de 64 son especialmente vulnerables por razones biológicas.\n\nEn las infancias, los pulmones y el sistema inmunológico aún están en desarrollo. Respiran más rápido y, en proporción a su tamaño, inhalan más contaminantes.\n\nEn las personas mayores, el organismo suele presentar mayor desgaste cardiovascular y respiratorio. La exposición al aire contaminado puede provocar inflamación sistémica y aumentar el riesgo de eventos graves como infartos.\n\nEn colonias con mayor proporción de infancias y personas mayores, el impacto potencial es estructuralmente más alto.`
+  },
+  'diabetes': {
+    title: '¿Cómo se relaciona la diabetes y la calidad del aire?',
+    body: `Las personas con diabetes tienen mayor riesgo de complicaciones cardiovasculares cuando están expuestas al aire contaminado. Su organismo ya enfrenta inflamación crónica, mayor estrés oxidativo y una vulnerabilidad previa del sistema cardiovascular.\n\nLa exposición a contaminantes puede empeorar el control metabólico. Las partículas finas pueden aumentar la resistencia a la insulina y dificultar la regulación de los niveles de glucosa.\n\nAdemás, la contaminación puede alterar el sistema nervioso autónomo, incrementando el riesgo de arritmias, cambios bruscos en la presión arterial e incluso eventos cardiovasculares graves.`
+  },
+  'hipertension': {
+    title: '¿Cómo se relaciona la hipertensión y la calidad del aire?',
+    body: `Vivir durante años en zonas con aire contaminado aumenta el riesgo de desarrollar hipertensión arterial, incluso cuando los niveles de contaminación no parecen extremos.\n\nLas partículas finas (PM2.5 y PM10) pueden generar inflamación, dañar los vasos sanguíneos y alterar el sistema nervioso autónomo, que regula la presión arterial.\n\nLas personas que ya viven con hipertensión son más vulnerables a los efectos inmediatos de la contaminación. Las partículas producen estrés oxidativo e inflamación adicional en un sistema cardiovascular ya comprometido.`
+  },
+  'respiratorias': {
+    title: 'Enfermedades respiratorias crónicas y calidad del aire',
+    body: `En personas con asma, EPOC o bronquitis crónica, la contaminación puede intensificar los síntomas. Las partículas finas, el ozono y otros contaminantes irritan las vías respiratorias, aumentan la inflamación y provocan crisis más frecuentes y graves.\n\nLa exposición prolongada daña el tejido pulmonar con el tiempo. Este daño acumulativo puede favorecer la aparición de asma, bronquitis crónica o EPOC, incluso en personas que antes no tenían estas condiciones.`
+  },
+  'no_fuma': {
+    title: 'Población que no fuma',
+    body: `Este indicador muestra el porcentaje de personas que no fuman en una colonia. Es un factor protector, porque el tabaco debilita los pulmones y el corazón.\n\nRespirar aire contaminado ya exige un esfuerzo extra al organismo. Fumar suma otra fuente de humo, como si los pulmones tuvieran que trabajar el doble.\n\nCuando más personas no fuman, hay mejores condiciones para cuidar la salud colectiva. Porque si el cielo ya está cargado, reducir el humo que sí podemos evitar le da al cuerpo más espacio para respirar.`
+  },
+  'acceso_salud': {
+    title: 'Acceso efectivo a servicios de salud',
+    body: `Combina dos elementos:\n\n• Derechohabiencia: si las personas están afiliadas a un sistema público de salud (IMSS o ISSSTE)\n• Disponibilidad y cercanía de servicios: qué tan cerca hay clínicas u hospitales, y si cuentan con personal y equipo suficiente\n\nCuando la contaminación desencadena una crisis asmática o un evento cardiovascular, el tiempo y la capacidad de respuesta pueden marcar la diferencia. El aire puede ser el mismo, pero la posibilidad de enfrentar sus efectos no lo es.`
+  },
+  'calificacion_salud': {
+    title: 'Calificación general de salud y acceso',
+    body: `Resume las condiciones de salud de la población y su acceso a servicios médicos en una sola medida.\n\nIntegra:\n• Proporción de personas sin enfermedades crónicas asociadas a mayor vulnerabilidad\n• Presencia de población que no fuma\n• Nivel de acceso efectivo al sistema de salud\n\nOfrece una fotografía clara del nivel de protección o vulnerabilidad estructural de la colonia frente a los impactos de la contaminación.`
+  },
+  'socio_clima': {
+    title: 'Condiciones Socioeconómicas y de Cambio Climático',
+    body: `Hablar de aire es hablar de desigualdad.\n\nLa exposición no se distribuye al azar, y tampoco la capacidad de respuesta frente a sus efectos.\n\nLas condiciones socioeconómicas y climáticas determinan qué tan expuesta está una colonia y qué tan preparada está para enfrentar los impactos ambientales.`
+  },
+  'desarrollo': {
+    title: 'Desarrollo socioeconómico',
+    body: `Considera factores como nivel de escolaridad, presencia de computadora, lavadora y refrigerador en el hogar.\n\nEl desarrollo socioeconómico influye en la capacidad para:\n• Acceder a información sobre alertas ambientales\n• Tomar decisiones informadas (evitar actividades al aire libre en días críticos)\n• Contar con mejores condiciones de vivienda\n• Acceder a servicios médicos rápidamente\n\nLos factores socioeconómicos proveen elementos clave para defenderse de las consecuencias de la mala calidad del aire.`
+  },
+  'frescura': {
+    title: 'Frescura',
+    body: `Evalúa la capacidad de una colonia para disipar el calor. No depende solo de los árboles, sino también del diseño urbano: sombra, vegetación, materiales y colores que reflejen la luz.\n\nCuando el calor queda atrapado en el asfalto y el concreto, se forman islas de calor. Estas zonas favorecen la formación de contaminantes como el ozono y generan estrés en el cuerpo.\n\nMás calor significa:\n• Mayor formación de contaminantes como el ozono\n• Más riesgo para la salud: estrés cardiovascular, infartos y crisis respiratorias\n• Mayor consumo de energía y vulnerabilidad ante olas de calor\n\nUna colonia fresca no es solo más cómoda: es más saludable y más resiliente.`
+  },
+  'inundaciones': {
+    title: 'Seguridad ante inundaciones',
+    body: `El diseño urbano influye directamente en la exposición a lluvias extremas. Cuando predominan "suelos sellados" (asfalto y concreto), el agua no puede filtrarse ni fluir con facilidad.\n\nLa falta de superficies permeables convierte la lluvia en una amenaza: puede provocar inundaciones, favorecer enfermedades y generar accidentes.\n\nUna colonia propensa a inundarse vive en una especie de interrupción constante. Se afectan servicios básicos y de emergencia, la movilidad se bloquea y las personas más vulnerables quedan aisladas.`
+  },
+  'resiliencia': {
+    title: 'Resiliencia climática',
+    body: `Integra dos dimensiones clave:\n• La frescura (si la temperatura es alta y persistente)\n• La seguridad ante inundaciones\n\nAl combinarlas, obtenemos un mapa real de la resiliencia: la capacidad de un entorno urbano para amortiguar los golpes del cambio climático.\n\nEl calor extremo no solo estresa al cuerpo, también acelera la formación de ozono. El aire puede volverse más tóxico justo cuando el organismo está más exigido por las altas temperaturas.\n\nEn un entorno frágil, no solo se deteriora el aire: también se compromete el refugio.`
+  },
+};
+
+// ============================================================
+// Component
+// ============================================================
 
 export default function MapExplorer() {
   const navigate = useNavigate();
@@ -58,7 +127,7 @@ export default function MapExplorer() {
   const [loading, setLoading] = useState(true);
   const [selectedColonia, setSelectedColonia] = useState<Colonia | null>(null);
   const [searchCP, setSearchCP] = useState('');
-  const [filtroRiesgo, setFiltroRiesgo] = useState<FiltroRiesgo>('todos');
+  const [filtroCumplimiento, setFiltroCumplimiento] = useState<FiltroCumplimiento>('todos');
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,29 +146,25 @@ export default function MapExplorer() {
   }, [allColonias, searchParams]);
 
   useEffect(() => {
-    if (filtroRiesgo === 'todos') { setColoniasFiltradas(allColonias); }
-    else { setColoniasFiltradas(allColonias.filter(c => c.categoria_riesgo === filtroRiesgo)); }
-  }, [filtroRiesgo, allColonias]);
+    if (filtroCumplimiento === 'todos') { setColoniasFiltradas(allColonias); }
+    else { setColoniasFiltradas(allColonias.filter(c => c.categoria_riesgo === cumplToRiesgo(filtroCumplimiento))); }
+  }, [filtroCumplimiento, allColonias]);
 
   const handleSearch = async () => {
     if (!searchCP.trim()) return;
     const colonia = await coloniaService.getColoniaByCP(searchCP.trim());
-    if (colonia) { setFiltroRiesgo('todos'); setSelectedColonia(colonia); }
+    if (colonia) { setFiltroCumplimiento('todos'); setSelectedColonia(colonia); }
     else { alert('Código postal no encontrado'); }
   };
 
-  const formatPct = (val: number | null | undefined) => {
+  const fmt = (val: number | null | undefined) => {
     if (val == null || isNaN(val)) return 'N/D';
     return `${(val * 100).toFixed(1)}%`;
   };
 
-  const getRiesgoColor = (cat: string) => {
-    switch (cat) { case 'alto': return '#ef4444'; case 'medio': return '#fbbf24'; case 'bajo': return '#4ade80'; default: return '#6b7280'; }
-  };
-
-  const contarPorCategoria = (cat: FiltroRiesgo) => {
-    if (cat === 'todos') return allColonias.length;
-    return allColonias.filter(c => c.categoria_riesgo === cat).length;
+  const contarPor = (cumpl: FiltroCumplimiento) => {
+    if (cumpl === 'todos') return allColonias.length;
+    return allColonias.filter(c => c.categoria_riesgo === cumplToRiesgo(cumpl)).length;
   };
 
   const toggleTooltip = (key: string) => { setActiveTooltip(activeTooltip === key ? null : key); };
@@ -114,11 +179,18 @@ export default function MapExplorer() {
     );
   }
 
+  const cumpl = selectedColonia ? getCumplimiento(selectedColonia.categoria_riesgo) : '';
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       {/* Header */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'white', padding: '12px 24px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: '#1f2937' }}>Mapa de Calidad del Aire - CDMX y Área Metropolitana</h1>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'white', padding: '10px 24px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '280px' }}>
+          <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 'bold', color: '#1f2937' }}>Mapa Integral de Riesgo Ambiental en CDMX y Zona Metropolitana</h1>
+          <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#6b7280', lineHeight: 1.4 }}>
+            Este mapa te muestra la ciudad desde el vuelo de un pájaro. Aquí se cruzan el aire, la salud y el acceso a servicios para mostrar dónde el riesgo se acumula y dónde hay más protección.
+          </p>
+        </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <input type="text" placeholder="Buscar CP..." value={searchCP} onChange={(e) => setSearchCP(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', width: '120px' }} />
           <button onClick={handleSearch} style={{ backgroundColor: '#fbbf24', color: '#111827', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}>Buscar</button>
@@ -126,132 +198,102 @@ export default function MapExplorer() {
         <button onClick={() => navigate('/')} style={{ backgroundColor: '#6b7280', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}>Volver al inicio</button>
       </div>
 
-      {/* Filtros */}
-      <div style={{ position: 'absolute', top: '70px', left: '20px', backgroundColor: 'white', padding: '12px 16px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '4px' }}>Filtrar por riesgo</div>
-        <FilterButton label="Todos" count={contarPorCategoria('todos')} isActive={filtroRiesgo === 'todos'} color="#6b7280" onClick={() => setFiltroRiesgo('todos')} />
-        <FilterButton label="Bajo" count={contarPorCategoria('bajo')} isActive={filtroRiesgo === 'bajo'} color="#4ade80" onClick={() => setFiltroRiesgo('bajo')} />
-        <FilterButton label="Medio" count={contarPorCategoria('medio')} isActive={filtroRiesgo === 'medio'} color="#fbbf24" onClick={() => setFiltroRiesgo('medio')} />
-        <FilterButton label="Alto" count={contarPorCategoria('alto')} isActive={filtroRiesgo === 'alto'} color="#ef4444" onClick={() => setFiltroRiesgo('alto')} />
+      {/* Filters */}
+      <div style={{ position: 'absolute', top: '90px', left: '20px', backgroundColor: 'white', padding: '12px 16px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '4px' }}>Nivel de cumplimiento</div>
+        <FilterBtn label="Todos" count={contarPor('todos')} active={filtroCumplimiento === 'todos'} color="#6b7280" onClick={() => setFiltroCumplimiento('todos')} />
+        <FilterBtn label="Alto" count={contarPor('alto')} active={filtroCumplimiento === 'alto'} color="#4ade80" onClick={() => setFiltroCumplimiento('alto')} />
+        <FilterBtn label="Medio" count={contarPor('medio')} active={filtroCumplimiento === 'medio'} color="#fbbf24" onClick={() => setFiltroCumplimiento('medio')} />
+        <FilterBtn label="Bajo" count={contarPor('bajo')} active={filtroCumplimiento === 'bajo'} color="#ef4444" onClick={() => setFiltroCumplimiento('bajo')} />
       </div>
 
-      {/* Mapa */}
-      <div style={{ width: '100%', height: '100%', paddingTop: '60px' }}>
+      {/* Legend */}
+      <div style={{ position: 'absolute', bottom: '30px', left: '20px', backgroundColor: 'white', padding: '12px 16px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 10 }}>
+        <div style={{ fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>NIVEL DE CUMPLIMIENTO</div>
+        {[{ l: 'Alto', c: '#4ade80' }, { l: 'Medio', c: '#fbbf24' }, { l: 'Bajo', c: '#ef4444' }].map(({ l, c }) => (
+          <div key={l} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: c }} />
+            <span style={{ fontSize: '12px', color: '#374151' }}>{l}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Map */}
+      <div style={{ width: '100%', height: '100%', paddingTop: '70px' }}>
         <MapView colonias={coloniasFiltradas} onColoniaClick={setSelectedColonia} selectedCP={selectedColonia?.codigo_postal} />
       </div>
 
-      {/* Panel de información */}
+      {/* ── Info Panel ── */}
       {selectedColonia && (
-        <div style={{ position: 'absolute', top: '70px', right: '20px', width: '360px', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.2)', zIndex: 10 }}>
-          {/* Header */}
-          <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, backgroundColor: 'white', borderRadius: '12px 12px 0 0' }}>
+        <div style={{ position: 'absolute', top: '90px', right: '20px', width: '400px', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.2)', zIndex: 10, fontSize: '14px', color: '#1f2937' }}>
+          {/* Panel Header */}
+          <div style={{ padding: '20px', borderBottom: '2px solid #e5e7eb', position: 'sticky', top: 0, backgroundColor: 'white', borderRadius: '12px 12px 0 0', zIndex: 2 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-              <div>
-                <h2 style={{ margin: '0 0 4px 0', fontSize: '22px', color: '#111827' }}>CP {selectedColonia.codigo_postal}</h2>
-                {selectedColonia.colonias && (
-                  <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#374151', lineHeight: '1.5' }}>{selectedColonia.colonias}</p>
-                )}
-                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>{selectedColonia.municipio}, {selectedColonia.estado}</p>
+              <div style={{ flex: 1 }}>
+                <h2 style={{ margin: '0 0 2px', fontSize: '22px', fontWeight: 700, color: '#111827' }}>CP {selectedColonia.codigo_postal}</h2>
+                {selectedColonia.colonias && <p style={{ margin: '0 0 2px', fontSize: '13px', color: '#374151' }}>{selectedColonia.colonias}</p>}
+                <p style={{ margin: 0, fontSize: '13px', color: '#6b7280', textTransform: 'uppercase' }}>{selectedColonia.municipio}, {selectedColonia.estado}</p>
               </div>
-              <button onClick={() => setSelectedColonia(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', padding: 0, lineHeight: 1, color: '#9ca3af' }}>×</button>
+              <button onClick={() => setSelectedColonia(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#9ca3af', padding: 0, lineHeight: 1 }}>×</button>
             </div>
-            <div style={{ marginTop: '12px' }}>
-              <span style={{ display: 'inline-block', padding: '6px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold', color: 'white', backgroundColor: getRiesgoColor(selectedColonia.categoria_riesgo) }}>
-                Riesgo {selectedColonia.categoria_riesgo.toUpperCase()}
+            {/* Cumplimiento + Índice — same line */}
+            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-block', padding: '5px 14px', borderRadius: '4px', fontSize: '13px', fontWeight: 700, color: 'white', backgroundColor: getCumplColor(cumpl) }}>
+                Cumplimiento {cumpl.toUpperCase()}
               </span>
-              <span style={{ marginLeft: '12px', fontSize: '14px', color: '#6b7280' }}>Índice: {formatPct(selectedColonia.indice_resumen)}</span>
+              <IBadge k={`cumplimiento_${cumpl}`} active={activeTooltip} toggle={toggleTooltip} />
+              <span style={{ fontSize: '13px', color: '#374151' }}>Índice de equidad: {fmt(selectedColonia.indice_resumen)}</span>
+              <IBadge k="indice_equidad" active={activeTooltip} toggle={toggleTooltip} />
             </div>
+            {/* Población total */}
+            <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#6b7280' }}>Población total: {selectedColonia.poblacion_total?.toLocaleString() || ''}</p>
           </div>
 
-          <div style={{ padding: '20px' }}>
-            {/* Exposición a contaminantes */}
-            <div style={{ marginBottom: '20px' }}>
-              <SectionHeader title="Exposición a Contaminantes" tooltipKey="contaminantes" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              <div style={{ display: 'grid', gap: '8px' }}>
-                <InfoRow label="Días con aire limpio (PM2.5)" value={formatPct(selectedColonia.dias_aire_limpio_pm25)} tooltipKey="pm25" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Días con aire limpio (Ozono)" value={formatPct(selectedColonia.dias_aire_limpio_ozono)} tooltipKey="ozono" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="PM2.5 sobre OMS" value={formatPct(selectedColonia.concentracion_alta_pm25)} warning tooltipKey="pm25" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Ozono sobre OMS" value={formatPct(selectedColonia.concentracion_alta_ozono)} warning tooltipKey="ozono" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Subíndice de aire" value={formatPct(selectedColonia.subindice_aire)} />
-              </div>
-            </div>
+          <div style={{ padding: '16px 20px' }}>
+            {/* ── EXPOSICIÓN A CONTAMINANTES ── */}
+            <Section title="EXPOSICIÓN A CONTAMINANTES" ik="contaminantes" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Días al año con aire limpio (PM2.5)" value={fmt(selectedColonia.dias_aire_limpio_pm25)} ik="dias_pm25" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Calidad del aire en días malos (PM2.5)" value={fmt(selectedColonia.concentracion_alta_pm25)} ik="calidad_pm25" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Días al año con aire limpio de Ozono" value={fmt(selectedColonia.dias_aire_limpio_ozono)} ik="dias_ozono" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Calidad del aire en días malos (Ozono)" value={fmt(selectedColonia.concentracion_alta_ozono)} ik="calidad_ozono" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Calificación general de aire" value={fmt(selectedColonia.subindice_aire)} ik="calificacion_aire" at={activeTooltip} toggle={toggleTooltip} />
 
-            {/* Condiciones de salud */}
-            <div style={{ marginBottom: '20px' }}>
-              <SectionHeader title="Condiciones de Salud en la Zona" tooltipKey="salud_general" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              <div style={{ display: 'grid', gap: '8px' }}>
-                <InfoRow label="Pob. sin diabetes" value={formatPct(selectedColonia.pob_sin_diabetes)} tooltipKey="diabetes" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Pob. sin hipertensión" value={formatPct(selectedColonia.pob_sin_hipertension)} tooltipKey="hipertension" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Pob. sin enf. respiratorias" value={formatPct(selectedColonia.pob_sin_enf_respiratorias)} tooltipKey="respiratorias" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Pob. sin enf. cardiovasculares" value={formatPct(selectedColonia.pob_sin_enf_cardiovasculares)} tooltipKey="cardiovasculares" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Subíndice de salud" value={formatPct(selectedColonia.subindice_salud)} tooltipKey="subindice_salud" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              </div>
-            </div>
+            <Spacer />
 
-            {/* Población con mayor sensibilidad */}
-            <div style={{ marginBottom: '20px' }}>
-              <SectionHeader title="Población con Mayor Sensibilidad" tooltipKey="poblacion_sensible" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              <div style={{ display: 'grid', gap: '8px' }}>
-                <InfoRow label="Población total" value={selectedColonia.poblacion_total?.toLocaleString() || 'N/D'} />
-                <InfoRow label="Población sensible" value={formatPct(selectedColonia.poblacion_sensible)} />
-                <InfoRow label="Pob. no fumadores" value={formatPct(selectedColonia.pob_no_fumadores)} tooltipKey="no_fumadores" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              </div>
-            </div>
+            {/* ── CONDICIONES DE SALUD Y ACCESO A SERVICIOS MÉDICOS ── */}
+            <Section title="CONDICIONES DE SALUD Y ACCESO A SERVICIOS MÉDICOS" ik="salud_acceso" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Población sensible por edad" value={fmt(selectedColonia.poblacion_sensible)} ik="pob_sensible_edad" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Población sin diabetes" value={fmt(selectedColonia.pob_sin_diabetes)} ik="diabetes" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Población sin hipertensión" value={fmt(selectedColonia.pob_sin_hipertension)} ik="hipertension" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Población sin enfermedades respiratorias crónicas" value={fmt(selectedColonia.pob_sin_enf_respiratorias)} ik="respiratorias" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Población que no fuma" value={fmt(selectedColonia.pob_no_fumadores)} ik="no_fuma" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Acceso efectivo a servicios de salud" value={fmt(selectedColonia.indice_infraestructura_sanitaria)} ik="acceso_salud" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Calificación general de condiciones de salud y acceso a servicios médicos" value={fmt(selectedColonia.subindice_salud)} ik="calificacion_salud" at={activeTooltip} toggle={toggleTooltip} />
 
-            {/* Acceso a salud */}
-            <div style={{ marginBottom: '20px' }}>
-              <SectionHeader title="Acceso a Servicios de Salud" />
-              <div style={{ display: 'grid', gap: '8px' }}>
-                <InfoRow label="Derechohabiencia" value={formatPct(selectedColonia.pob_derechohabiente)} tooltipKey="derechohabiencia" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Densidad médicos y camas (vs OCDE)" value={formatPct(selectedColonia.indice_infraestructura_sanitaria)} tooltipKey="infraestructura" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Proximidad infraestructura médica" value={formatPct(selectedColonia.proximidad_infraestructura_medica)} tooltipKey="proximidad_medica" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              </div>
-            </div>
+            <Spacer />
 
-            {/* Socioeconómica */}
-            <div style={{ marginBottom: '20px' }}>
-              <SectionHeader title="Indicadores Socioeconómicos" tooltipKey="socioeconomico" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              <div style={{ display: 'grid', gap: '8px' }}>
-                <InfoRow label="Años de escolaridad" value={formatPct(selectedColonia.anos_escolaridad)} />
-                <InfoRow label="Viviendas con computadora" value={formatPct(selectedColonia.viviendas_computadora)} />
-                <InfoRow label="Viviendas con lavadora" value={formatPct(selectedColonia.viviendas_lavadora)} />
-                <InfoRow label="Viviendas con refrigerador" value={formatPct(selectedColonia.viviendas_refrigerador)} />
-                <InfoRow label="Subíndice socioeconómico" value={formatPct(selectedColonia.subindice_socioeconomico)} />
-              </div>
-            </div>
-
-            {/* Índices de desarrollo */}
-            <div style={{ marginBottom: '20px' }}>
-              <SectionHeader title="Índices de Desarrollo" tooltipKey="desarrollo" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              <div style={{ display: 'grid', gap: '8px' }}>
-                <InfoRow label="Índice de desarrollo" value={formatPct(selectedColonia.indice_desarrollo)} />
-                <InfoRow label="Prioridad sensible" value={formatPct(selectedColonia.indice_prioridad_sensible)} />
-              </div>
-            </div>
-
-            {/* Cambio climático */}
-            <div style={{ marginBottom: '20px' }}>
-              <SectionHeader title="Cambio Climático" tooltipKey="cambio_climatico" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              <div style={{ display: 'grid', gap: '8px' }}>
-                <InfoRow label="Subíndice cambio climático" value={formatPct(selectedColonia.subindice_cambio_climatico)} />
-                <InfoRow label="Frescura (isla de calor)" value={formatPct(selectedColonia.indice_frescura)} tooltipKey="frescura" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-                <InfoRow label="Seguridad ante inundaciones" value={formatPct(selectedColonia.seguridad_inundaciones)} tooltipKey="inundaciones" activeTooltip={activeTooltip} onToggle={toggleTooltip} />
-              </div>
-            </div>
-
+            {/* ── CONDICIONES SOCIOECONÓMICAS Y DE CAMBIO CLIMÁTICO ── */}
+            <Section title="CONDICIONES SOCIOECONÓMICAS Y DE CAMBIO CLIMÁTICO" ik="socio_clima" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Desarrollo socioeconómico" value={fmt(selectedColonia.subindice_socioeconomico)} ik="desarrollo" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Frescura" value={fmt(selectedColonia.indice_frescura)} ik="frescura" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Seguridad ante inundaciones" value={fmt(selectedColonia.seguridad_inundaciones)} ik="inundaciones" at={activeTooltip} toggle={toggleTooltip} />
+            <Row label="Resiliencia climática" value={fmt(selectedColonia.subindice_cambio_climatico)} ik="resiliencia" at={activeTooltip} toggle={toggleTooltip} />
           </div>
         </div>
       )}
 
-      {/* Tooltip Modal */}
+      {/* ── Tooltip Modal ── */}
       {activeTooltip && TOOLTIPS[activeTooltip] && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }} onClick={() => setActiveTooltip(null)}>
-          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '24px', maxWidth: '450px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#fbbf24', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold', color: '#111827' }}>i</div>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }} onClick={() => setActiveTooltip(null)}>
+          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '24px', maxWidth: '480px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#fbbf24', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 'bold', color: '#111827', flexShrink: 0 }}>i</div>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#111827' }}>{TOOLTIPS[activeTooltip].title}</h3>
+              </div>
               <button onClick={() => setActiveTooltip(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#9ca3af', padding: 0, lineHeight: 1 }}>×</button>
             </div>
-            <div style={{ fontSize: '14px', color: '#374151', lineHeight: '1.7', whiteSpace: 'pre-line' }}>{TOOLTIPS[activeTooltip]}</div>
+            <div style={{ fontSize: '14px', color: '#374151', lineHeight: '1.7', whiteSpace: 'pre-line' }}>{TOOLTIPS[activeTooltip].body}</div>
           </div>
         </div>
       )}
@@ -259,37 +301,58 @@ export default function MapExplorer() {
   );
 }
 
-function SectionHeader({ title, tooltipKey, activeTooltip, onToggle }: { title: string; tooltipKey?: string; activeTooltip?: string | null; onToggle?: (key: string) => void; }) {
+// ── Sub-components ──
+
+const I_COLORS = { bg: '#3b82f6', bgActive: '#fbbf24', text: '#fff', textActive: '#111827' };
+
+function IBadge({ k, active, toggle }: { k: string; active: string | null; toggle: (k: string) => void }) {
+  const isActive = active === k;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-      <h3 style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</h3>
-      {tooltipKey && onToggle && (
-        <button onClick={() => onToggle(tooltipKey)} style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: activeTooltip === tooltipKey ? '#fbbf24' : '#e5e7eb', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', color: activeTooltip === tooltipKey ? '#111827' : '#6b7280', transition: 'all 0.2s' }}>i</button>
-      )}
+    <button onClick={() => toggle(k)} style={{
+      width: '20px', height: '20px', borderRadius: '4px', border: 'none', cursor: 'pointer',
+      backgroundColor: isActive ? I_COLORS.bgActive : I_COLORS.bg,
+      color: isActive ? I_COLORS.textActive : I_COLORS.text,
+      fontSize: '12px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0, transition: 'all 0.15s',
+    }}>i</button>
+  );
+}
+
+function Section({ title, ik, at, toggle }: { title: string; ik: string; at: string | null; toggle: (k: string) => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
+      <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#111827', letterSpacing: '0.3px' }}>{title}</h3>
+      <IBadge k={ik} active={at} toggle={toggle} />
     </div>
   );
 }
 
-function FilterButton({ label, count, isActive, color, onClick }: { label: string; count: number; isActive: boolean; color: string; onClick: () => void; }) {
+function Row({ label, value, ik, at, toggle }: { label: string; value: string; ik?: string; at?: string | null; toggle?: (k: string) => void }) {
   return (
-    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', borderRadius: '8px', border: isActive ? `2px solid ${color}` : '2px solid transparent', backgroundColor: isActive ? `${color}15` : 'transparent', cursor: 'pointer', transition: 'all 0.2s', width: '100%' }}>
-      <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: color }} />
-      <span style={{ fontSize: '13px', fontWeight: isActive ? '600' : '400', color: '#374151', flex: 1, textAlign: 'left' }}>{label}</span>
-      <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: '500' }}>{count.toLocaleString()}</span>
-    </button>
-  );
-}
-
-function InfoRow({ label, value, warning = false, tooltipKey, activeTooltip, onToggle }: { label: string; value: string; warning?: boolean; tooltipKey?: string; activeTooltip?: string | null; onToggle?: (key: string) => void; }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{ fontSize: '13px', color: '#374151' }}>{label}</span>
-        {tooltipKey && onToggle && (
-          <button onClick={() => onToggle(tooltipKey)} style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: activeTooltip === tooltipKey ? '#fbbf24' : '#e5e7eb', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', color: activeTooltip === tooltipKey ? '#111827' : '#6b7280', transition: 'all 0.2s', flexShrink: 0 }}>i</button>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ flex: 1, paddingRight: '12px' }}>
+        <span style={{ fontSize: '13px', color: '#374151', display: 'block' }}>{label}</span>
+        {ik && toggle && (
+          <div style={{ marginTop: '4px' }}>
+            <IBadge k={ik} active={at!} toggle={toggle} />
+          </div>
         )}
       </div>
-      <span style={{ fontSize: '13px', fontWeight: '600', color: warning ? '#ef4444' : '#111827' }}>{value}</span>
+      <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827', flexShrink: 0, paddingTop: '1px' }}>{value}</span>
     </div>
+  );
+}
+
+function Spacer() {
+  return <div style={{ height: '8px', borderBottom: '2px solid #111827', marginBottom: '12px' }} />;
+}
+
+function FilterBtn({ label, count, active, color, onClick }: { label: string; count: number; active: boolean; color: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', borderRadius: '8px', border: active ? `2px solid ${color}` : '2px solid transparent', backgroundColor: active ? `${color}15` : 'transparent', cursor: 'pointer', transition: 'all 0.2s', width: '100%' }}>
+      <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: color }} />
+      <span style={{ fontSize: '13px', fontWeight: active ? '600' : '400', color: '#374151', flex: 1, textAlign: 'left' }}>{label}</span>
+      <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: '500' }}>{count.toLocaleString()}</span>
+    </button>
   );
 }

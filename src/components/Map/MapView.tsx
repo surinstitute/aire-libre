@@ -9,18 +9,40 @@ interface MapViewProps {
   selectedCP?: string;
 }
 
-// Tileset ID de Mapbox con los polígonos
 const TILESET_ID = 'loungelizard7.bcqgjoe8';
 const SOURCE_LAYER = 'codigos_postales-43psgh';
 
-// Colores más opacos/suaves
+// ── Colors: mapped by DB categoria_riesgo ──
+// DB "bajo"  (low risk)  → GREEN  (cumplimiento alto = more rights)
+// DB "medio"             → YELLOW
+// DB "alto"  (high risk) → RED    (cumplimiento bajo = fewer rights)
 const COLORS = {
-  bajo: '#86efac',
-  medio: '#fcd34d',
-  alto: '#fca5a5',
+  bajo: '#86efac',   // green — cumplimiento alto
+  medio: '#fcd34d',  // yellow
+  alto: '#fca5a5',   // red — cumplimiento bajo
   default: '#9ca3af',
   border: '#1f2937',
   borderHover: '#000000'
+};
+
+// DB categoria_riesgo → cumplimiento label
+const getCumplimiento = (categoriaRiesgo: string): string => {
+  switch (categoriaRiesgo) {
+    case 'bajo': return 'ALTO';
+    case 'medio': return 'MEDIO';
+    case 'alto': return 'BAJO';
+    default: return 'MEDIO';
+  }
+};
+
+// Color for cumplimiento badge in popup
+const getCumplColor = (categoriaRiesgo: string): string => {
+  switch (categoriaRiesgo) {
+    case 'bajo': return '#22c55e';   // green
+    case 'medio': return '#eab308';  // yellow
+    case 'alto': return '#ef4444';   // red
+    default: return '#6b7280';
+  }
 };
 
 function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
@@ -31,12 +53,10 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
   const [hoveredCP, setHoveredCP] = useState<string | null>(null);
 
   const coloniasByCP = useRef<Map<string, Colonia>>(new Map());
-  
+
   useEffect(() => {
     const lookup = new Map<string, Colonia>();
-    colonias.forEach(c => {
-      lookup.set(c.codigo_postal, c);
-    });
+    colonias.forEach(c => { lookup.set(c.codigo_postal, c); });
     coloniasByCP.current = lookup;
   }, [colonias]);
 
@@ -44,7 +64,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
     if (map.current) return;
 
     const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
-    
     if (!mapboxToken || !mapContainer.current) {
       console.error('Mapbox token o container no encontrado');
       return;
@@ -63,13 +82,11 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
 
     map.current.on('load', () => {
       setIsLoaded(true);
-      
       map.current!.addSource('polygons', {
         type: 'vector',
         url: `mapbox://${TILESET_ID}`,
         promoteId: 'codigo_postal'
       });
-
       setMapReady(true);
     });
 
@@ -77,10 +94,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
     map.current.addControl(new mapboxgl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-right');
 
     return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
+      if (map.current) { map.current.remove(); map.current = null; }
     };
   }, []);
 
@@ -89,16 +103,12 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
 
     const layersToRemove = ['polygons-fill', 'polygons-outline-hover', 'points-circle'];
     layersToRemove.forEach(layer => {
-      if (map.current!.getLayer(layer)) {
-        map.current!.removeLayer(layer);
-      }
+      if (map.current!.getLayer(layer)) map.current!.removeLayer(layer);
     });
-    if (map.current.getSource('points')) {
-      map.current.removeSource('points');
-    }
+    if (map.current.getSource('points')) map.current.removeSource('points');
 
+    // Build color expression — uses DB categoria_riesgo with inverted color meaning
     const colorExpression: any[] = ['match', ['to-string', ['get', 'codigo_postal']]];
-    
     colonias.forEach(colonia => {
       const color = colonia.categoria_riesgo === 'alto' ? COLORS.alto :
                     colonia.categoria_riesgo === 'medio' ? COLORS.medio :
@@ -107,7 +117,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
     });
     colorExpression.push(COLORS.default);
 
-    // Capa de relleno
     map.current.addLayer({
       id: 'polygons-fill',
       type: 'fill',
@@ -124,7 +133,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       }
     });
 
-    // Contorno solo en hover
     map.current.addLayer({
       id: 'polygons-outline-hover',
       type: 'line',
@@ -132,38 +140,24 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       'source-layer': SOURCE_LAYER,
       paint: {
         'line-color': COLORS.borderHover,
-        'line-width': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          2,
-          0
-        ],
+        'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 2, 0],
         'line-opacity': 1
       }
     });
 
-    // Puntos para zoom alto
+    // Points for high zoom
     const pointsData: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
       features: colonias
         .filter(c => c.latitud && c.longitud)
         .map(colonia => ({
           type: 'Feature',
-          properties: {
-            codigo_postal: colonia.codigo_postal,
-            categoria_riesgo: colonia.categoria_riesgo
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: [colonia.longitud, colonia.latitud]
-          }
+          properties: { codigo_postal: colonia.codigo_postal, categoria_riesgo: colonia.categoria_riesgo },
+          geometry: { type: 'Point', coordinates: [colonia.longitud, colonia.latitud] }
         }))
     };
 
-    map.current.addSource('points', {
-      type: 'geojson',
-      data: pointsData
-    });
+    map.current.addSource('points', { type: 'geojson', data: pointsData });
 
     map.current.addLayer({
       id: 'points-circle',
@@ -172,8 +166,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       minzoom: 14,
       paint: {
         'circle-color': [
-          'match',
-          ['get', 'categoria_riesgo'],
+          'match', ['get', 'categoria_riesgo'],
           'bajo', COLORS.bajo,
           'medio', COLORS.medio,
           'alto', COLORS.alto,
@@ -189,18 +182,16 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
 
     map.current.on('mousemove', 'polygons-fill', (e) => {
       if (!e.features || e.features.length === 0) return;
-      
       map.current!.getCanvas().style.cursor = 'pointer';
       const feature = e.features[0];
       const cp = String(feature.properties?.codigo_postal);
-      
+
       if (hoveredFeatureId !== null && hoveredFeatureId !== cp) {
         map.current!.setFeatureState(
           { source: 'polygons', sourceLayer: SOURCE_LAYER, id: hoveredFeatureId },
           { hover: false }
         );
       }
-      
       if (cp) {
         hoveredFeatureId = cp;
         map.current!.setFeatureState(
@@ -225,25 +216,18 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
 
     map.current.on('click', 'polygons-fill', (e) => {
       if (!e.features || e.features.length === 0) return;
-      
       const feature = e.features[0];
       const cp = String(feature.properties?.codigo_postal);
-      
+
       if (cp) {
         const colonia = coloniasByCP.current.get(cp);
-        if (colonia && onColoniaClick) {
-          onColoniaClick(colonia);
-        }
+        if (colonia && onColoniaClick) onColoniaClick(colonia);
 
         const coordinates = e.lngLat;
-        const color = colonia?.categoria_riesgo === 'alto' ? COLORS.alto :
-                      colonia?.categoria_riesgo === 'medio' ? COLORS.medio : COLORS.bajo;
+        const cumpl = getCumplimiento(colonia?.categoria_riesgo || 'medio');
+        const color = getCumplColor(colonia?.categoria_riesgo || 'medio');
 
-        new mapboxgl.Popup({ 
-          offset: 15,
-          closeButton: true,
-          closeOnClick: false
-        })
+        new mapboxgl.Popup({ offset: 15, closeButton: true, closeOnClick: false })
           .setLngLat(coordinates)
           .setHTML(`
             <div style="padding: 16px; min-width: 200px; font-family: system-ui, sans-serif;">
@@ -264,7 +248,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
                 background-color: ${color};
                 text-transform: uppercase;
               ">
-                Riesgo ${colonia?.categoria_riesgo || 'N/A'}
+                Cumplimiento ${cumpl}
               </span>
             </div>
           `)
@@ -276,57 +260,15 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
 
   useEffect(() => {
     if (!isLoaded || !map.current || !selectedCP) return;
-
     const colonia = colonias.find(c => c.codigo_postal === selectedCP);
     if (colonia && colonia.latitud && colonia.longitud) {
-      map.current.flyTo({
-        center: [colonia.longitud, colonia.latitud],
-        zoom: 14,
-        duration: 1500
-      });
+      map.current.flyTo({ center: [colonia.longitud, colonia.latitud], zoom: 14, duration: 1500 });
     }
   }, [selectedCP, isLoaded, colonias]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
-      
-      {/* Leyenda */}
-      <div style={{
-        position: 'absolute',
-        bottom: '40px',
-        left: '20px',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        padding: '16px 20px',
-        borderRadius: '12px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        fontSize: '14px'
-      }}>
-        <div style={{ fontWeight: '700', marginBottom: '12px', color: '#111827', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          Nivel de Riesgo
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <LegendItem color={COLORS.bajo} label="Bajo" />
-          <LegendItem color={COLORS.medio} label="Medio" />
-          <LegendItem color={COLORS.alto} label="Alto" />
-        </div>
-      </div>
-
-      {/* Contador */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        padding: '10px 16px',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        fontSize: '13px',
-        color: '#374151',
-        fontWeight: '600'
-      }}>
-        <span style={{ color: '#111827', fontWeight: '700' }}>{colonias.length.toLocaleString()}</span> códigos postales
-      </div>
 
       {hoveredCP && (
         <div style={{
@@ -356,15 +298,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
           color: #9ca3af;
         }
       `}</style>
-    </div>
-  );
-}
-
-function LegendItem({ color, label }: { color: string; label: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: color }} />
-      <span style={{ color: '#374151', fontWeight: '500' }}>{label}</span>
     </div>
   );
 }
