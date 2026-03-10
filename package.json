@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/bebas-neue": "^5.2.7",
     "@fontsource/lora": "^5.2.8",
     "@fontsource/playfair-display": "^5.2.8",
+    "@fontsource/space-mono": "^5.2.9",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
     "@supabase/supabase-js": "^2.87.1",
