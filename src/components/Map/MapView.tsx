@@ -130,6 +130,8 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       if (hovId) { map.current!.setFeatureState({ source: 'polygons', sourceLayer: SOURCE_LAYER, id: hovId }, { hover: false }); hovId = null; setHoveredCP(null); }
     });
 
+    let activePopup: mapboxgl.Popup | null = null;
+
     map.current.on('click', 'polygons-fill', (e) => {
       if (!e.features?.length) return;
       const cp = String(e.features[0].properties?.codigo_postal);
@@ -141,7 +143,10 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       const color = BADGE_COLORS[cat] || '#6b7280';
       const cumplLabel = cat === 'alto' ? 'Mejor cumplimiento' : cat === 'medio' ? 'Cumplimiento PROMEDIO' : 'Cumplimiento BAJO';
 
-      new mapboxgl.Popup({ offset: 15, closeButton: true, closeOnClick: false })
+      // Close previous popup
+      if (activePopup) { activePopup.remove(); activePopup = null; }
+
+      activePopup = new mapboxgl.Popup({ offset: 15, closeButton: true, closeOnClick: true })
         .setLngLat(e.lngLat)
         .setHTML(`
           <div style="padding:16px;min-width:200px;font-family:system-ui,sans-serif">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   calculateResult,
@@ -7,6 +7,8 @@ import {
 } from '../data/quizData';
 import type { QuizAnswers, BirdProfile } from '../data/quizData';
 import type { Colonia } from '../types';
+
+const Bird3DViewer = lazy(() => import('../components/Bird/Bird3DViewer'));
 
 // ============================================================
 // Slide palettes
@@ -20,8 +22,7 @@ const slidePalettes = [
   { bg: '#1A1A2E', text: '#F5F0E8', accent: '#c4b5fd' },
   { bg: '#5B2C3F', text: '#F5F0E8', accent: '#fbbf24' },
   { bg: '#0F4C3A', text: '#F5F0E8', accent: '#86efac' },
-  { bg: '#A62C2B', text: '#F5F0E8', accent: '#F5F0E8' },
-  { bg: '#1B3A4B', text: '#F5F0E8', accent: '#fcd34d' }, // summary
+  { bg: '#A62C2B', text: '#F5F0E8', accent: '#F5F0E8' }, // final — score + share + CTA
 ];
 
 type Palette = (typeof slidePalettes)[0];
@@ -64,6 +65,7 @@ function getShareText(bird: BirdProfile, _total: number): string {
 
 interface ShareCardData {
   birdEmoji: string;
+  birdImageUrl?: string | null;
   birdName: string;
   subtitle: string;
   contextoLabel: string;
@@ -71,9 +73,6 @@ interface ShareCardData {
   rows: { label: string; value: string }[];
 }
 
-/**
- * Helper: draw a rounded rectangle (compatible with all browsers)
- */
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, r: number
@@ -91,9 +90,6 @@ function roundRect(
   ctx.closePath();
 }
 
-/**
- * Helper: draw a pill/badge shape
- */
 function drawPill(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -116,9 +112,6 @@ function drawPill(
   ctx.fillText(text, x, y + 5);
 }
 
-/**
- * Draw the share card directly on a Canvas — 100% reliable, no html2canvas
- */
 function generateShareImage(data: ShareCardData): Promise<Blob | null> {
   const W = 720;
   const H = 960;
@@ -134,110 +127,108 @@ function generateShareImage(data: ShareCardData): Promise<Blob | null> {
   const line = 'rgba(245, 240, 232, 0.12)';
   const white = '#F5F0E8';
 
-  // ── Background ──
   ctx.fillStyle = bg;
   roundRect(ctx, 0, 0, W, H, 24);
   ctx.fill();
 
-  // ── Decorative top line ──
   ctx.fillStyle = accent;
   ctx.fillRect(60, 40, W - 120, 3);
 
-  // ── "AIRE LIBRE" header ──
   ctx.font = 'bold 14px Georgia, serif';
   ctx.fillStyle = 'rgba(245, 240, 232, 0.4)';
   ctx.textAlign = 'center';
   ctx.fillText('A I R E   L I B R E', W / 2, 72);
 
-  // ── Emoji ──
-  ctx.font = '64px serif';
-  ctx.fillText(data.birdEmoji, W / 2, 140);
+  const drawRest = () => {
+    ctx.font = 'bold 34px Georgia, serif';
+    ctx.fillStyle = accent;
+    ctx.textAlign = 'center';
+    ctx.fillText(data.birdName, W / 2, 185);
 
-  // ── Bird name ──
-  ctx.font = 'bold 34px Georgia, serif';
-  ctx.fillStyle = accent;
-  ctx.fillText(data.birdName, W / 2, 185);
-
-  // ── Subtitle ──
-  ctx.font = '15px Georgia, serif';
-  ctx.fillStyle = dim;
-  ctx.fillText(data.subtitle, W / 2, 212);
-
-  // ── Axis pills ──
-  drawPill(ctx, `Contexto: ${data.contextoLabel}`, W / 2 - 120, 248, 'rgba(139, 92, 246, 0.25)', '#c4b5fd');
-  drawPill(ctx, `Individuo: ${data.individuoLabel}`, W / 2 + 120, 248, 'rgba(244, 114, 182, 0.25)', '#f9a8d4');
-
-  // ── Divider ──
-  ctx.strokeStyle = line;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(60, 280);
-  ctx.lineTo(W - 60, 280);
-  ctx.stroke();
-
-  // ── Summary rows ──
-  const startY = 316;
-  const rowH = 48;
-
-  data.rows.forEach((row, i) => {
-    const y = startY + i * rowH;
-
-    // Label
-    ctx.font = '16px Georgia, serif';
+    ctx.font = '15px Georgia, serif';
     ctx.fillStyle = dim;
-    ctx.textAlign = 'left';
-    ctx.fillText(row.label, 72, y);
+    ctx.fillText(data.subtitle, W / 2, 212);
 
-    // Value
+    drawPill(ctx, `Contexto: ${data.contextoLabel}`, W / 2 - 120, 248, 'rgba(139, 92, 246, 0.25)', '#c4b5fd');
+    drawPill(ctx, `Individuo: ${data.individuoLabel}`, W / 2 + 120, 248, 'rgba(244, 114, 182, 0.25)', '#f9a8d4');
+
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(60, 280);
+    ctx.lineTo(W - 60, 280);
+    ctx.stroke();
+
+    const startY = 316;
+    const rowH = 48;
+
+    data.rows.forEach((row, i) => {
+      const y = startY + i * rowH;
+      ctx.font = '16px Georgia, serif';
+      ctx.fillStyle = dim;
+      ctx.textAlign = 'left';
+      ctx.fillText(row.label, 72, y);
+      ctx.font = 'bold 16px Georgia, serif';
+      ctx.fillStyle = white;
+      ctx.textAlign = 'right';
+      ctx.fillText(row.value, W - 72, y);
+      if (i < data.rows.length - 1) {
+        ctx.strokeStyle = line;
+        ctx.beginPath();
+        ctx.moveTo(72, y + 16);
+        ctx.lineTo(W - 72, y + 16);
+        ctx.stroke();
+      }
+    });
+
+    const footerY = startY + data.rows.length * rowH + 24;
+    ctx.strokeStyle = line;
+    ctx.beginPath();
+    ctx.moveTo(60, footerY);
+    ctx.lineTo(W - 60, footerY);
+    ctx.stroke();
+
+    ctx.font = '12px Georgia, serif';
+    ctx.fillStyle = 'rgba(245, 240, 232, 0.3)';
+    ctx.textAlign = 'center';
+    ctx.fillText('aire-libre-tawny.vercel.app/quiz', W / 2, footerY + 28);
+
     ctx.font = 'bold 16px Georgia, serif';
-    ctx.fillStyle = white;
-    ctx.textAlign = 'right';
-    ctx.fillText(row.value, W - 72, y);
+    ctx.fillStyle = accent;
+    ctx.fillText('¿Cuál eres tú? Haz el test →', W / 2, footerY + 58);
 
-    // Row separator
-    if (i < data.rows.length - 1) {
-      ctx.strokeStyle = line;
-      ctx.beginPath();
-      ctx.moveTo(72, y + 16);
-      ctx.lineTo(W - 72, y + 16);
-      ctx.stroke();
-    }
-  });
-
-  // ── Footer area ──
-  const footerY = startY + data.rows.length * rowH + 24;
-
-  ctx.strokeStyle = line;
-  ctx.beginPath();
-  ctx.moveTo(60, footerY);
-  ctx.lineTo(W - 60, footerY);
-  ctx.stroke();
-
-  // Branding
-  ctx.font = '12px Georgia, serif';
-  ctx.fillStyle = 'rgba(245, 240, 232, 0.3)';
-  ctx.textAlign = 'center';
-  ctx.fillText('aire-libre-tawny.vercel.app/quiz', W / 2, footerY + 28);
-
-  // CTA
-  ctx.font = 'bold 16px Georgia, serif';
-  ctx.fillStyle = accent;
-  ctx.fillText('¿Cuál eres tú? Haz el test →', W / 2, footerY + 58);
-
-  // ── Bottom decorative line ──
-  ctx.fillStyle = accent;
-  ctx.fillRect(60, H - 40, W - 120, 3);
+    ctx.fillStyle = accent;
+    ctx.fillRect(60, H - 40, W - 120, 3);
+  };
 
   return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
+    if (data.birdImageUrl) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const imgSize = 96;
+        ctx.drawImage(img, W / 2 - imgSize / 2, 90 - imgSize / 2, imgSize, imgSize);
+        drawRest();
+        canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
+      };
+      img.onerror = () => {
+        ctx.font = '64px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(data.birdEmoji, W / 2, 140);
+        drawRest();
+        canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
+      };
+      img.src = data.birdImageUrl;
+    } else {
+      ctx.font = '64px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(data.birdEmoji, W / 2, 140);
+      drawRest();
+      canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
+    }
   });
 }
 
-/**
- * Generate image and share/download
- * Mobile: uses Web Share API (native share sheet with image)
- * Desktop: always downloads the PNG directly
- */
 async function shareAsImage(
   data: ShareCardData,
   bird: BirdProfile,
@@ -246,11 +237,9 @@ async function shareAsImage(
   const blob = await generateShareImage(data);
   if (!blob) return 'error';
 
-  // Detect mobile (touch device + small screen)
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (navigator.maxTouchPoints > 0 && window.innerWidth < 768);
 
-  // Mobile: use Web Share API for native share sheet
   if (isMobile && navigator.share) {
     const file = new File([blob], 'aire-libre-resultado.png', { type: 'image/png' });
     const shareText = getShareText(bird, total);
@@ -264,7 +253,6 @@ async function shareAsImage(
     }
   }
 
-  // Desktop: always download directly
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -276,9 +264,6 @@ async function shareAsImage(
   return 'downloaded';
 }
 
-/**
- * Share to Twitter
- */
 function shareToTwitter(bird: BirdProfile, total: number) {
   const text = encodeURIComponent(
     `Hice el test de Aire Libre y soy un ${bird.name} 🐦 (${total}/20). ¿Cuál eres tú? Descúbrelo en`
@@ -291,9 +276,6 @@ function shareToTwitter(bird: BirdProfile, total: number) {
   );
 }
 
-/**
- * Share to Facebook
- */
 function shareToFacebook() {
   const url = encodeURIComponent(`${SITE_URL}/quiz`);
   window.open(
@@ -532,8 +514,8 @@ const QuizResult: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const birdSnapshotFn = useRef<(() => string | null) | null>(null);
 
-  // Load data
   const answers: QuizAnswers = useMemo(() => {
     try {
       const stored = sessionStorage.getItem('quizAnswers');
@@ -582,7 +564,7 @@ const QuizResult: React.FC = () => {
     navigate(cp ? `/map?cp=${encodeURIComponent(cp)}` : '/map');
   }, [answers, navigate]);
 
-  // Share as image handler — uses Canvas API directly
+  // Share handler
   const handleShareImage = useCallback(async () => {
     setShareStatus('Generando imagen...');
 
@@ -613,6 +595,7 @@ const QuizResult: React.FC = () => {
 
     const cardData: ShareCardData = {
       birdEmoji: result.bird.emoji,
+      birdImageUrl: birdSnapshotFn.current ? birdSnapshotFn.current() : null,
       birdName: result.bird.name,
       subtitle: result.bird.subtitle,
       contextoLabel: ctxLabels[result.contexto.category],
@@ -644,7 +627,20 @@ const QuizResult: React.FC = () => {
       content: (
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}>
-            <div style={{ fontSize: '80px', marginBottom: '16px' }}>{result.bird.emoji}</div>
+            <div style={{ width: '220px', height: '220px', margin: '0 auto 16px' }}>
+              <Suspense fallback={<div style={{ fontSize: '80px', textAlign: 'center' }}>{result.bird.emoji}</div>}>
+                <Bird3DViewer
+                  variant={1}
+                  width="220px"
+                  height="220px"
+                  autoRotateSpeed={0.3}
+                  showControls={false}
+                  backgroundColor={null}
+                  cameraDistance={3.5}
+                  onReady={(fn) => { birdSnapshotFn.current = fn; }}
+                />
+              </Suspense>
+            </div>
           </FadeIn>
           <FadeIn delay={500}>
             <div style={s(p0).birdName}>{result.bird.name}</div>
@@ -819,151 +815,86 @@ const QuizResult: React.FC = () => {
       ),
     });
 
-    // 8 — Score breakdown
-    const p7 = slidePalettes[7];
+    // ========================================================
+    // 8 — FINAL SLIDE: Score + Share + CTA (merged)
+    // ========================================================
+    const pFinal = slidePalettes[7];
     const contextoLabel = ['Favorable', 'Moderado', 'Perjudicial'][result.contexto.category];
     const individuoLabel = ['Resistente', 'Medianamente resistente', 'Altamente sensible'][result.individuo.category];
-    out.push({
-      palette: p7,
-      content: (
-        <div style={{ textAlign: 'center', width: '100%', maxWidth: '480px' }}>
-          <FadeIn delay={200}>
-            <div style={s(p7).small}>Tu resultado</div>
-            <div style={s(p7).bigNum}>
-              {result.bird.emoji}
-            </div>
-            <div style={{ ...s(p7).birdName, marginBottom: '20px' }}>{result.bird.name}</div>
-          </FadeIn>
-          <FadeIn delay={400}>
-            <div style={{ marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.6, marginBottom: '4px' }}>
-                <span>Contexto</span><span>{contextoLabel} ({result.contexto.raw}/6)</span>
-              </div>
-              <div style={s(p7).bar}>
-                <div style={{ ...s(p7).barFill, width: `${(result.contexto.raw / 6) * 100}%` }} />
-              </div>
-            </div>
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.6, marginBottom: '4px' }}>
-                <span>Individuo</span><span>{individuoLabel} ({result.individuo.raw}/7)</span>
-              </div>
-              <div style={s(p7).bar}>
-                <div style={{ ...s(p7).barFill, width: `${(result.individuo.raw / 7) * 100}%` }} />
-              </div>
-            </div>
-          </FadeIn>
-          <FadeIn delay={700}>
-            <p style={{ fontSize: '16px', lineHeight: 1.7, opacity: 0.75 }}>
-              Ante la crisis de aire, <span style={{ fontWeight: 700, color: p7.accent }}>NO TE QUEDES EN CASA</span>. Sal y pide un cambio.
-            </p>
-          </FadeIn>
-        </div>
-      ),
-    });
-
-    // 9 — SUMMARY + Share + CTA
-    const p8 = slidePalettes[8];
     const condLabel = hasConds
       ? conds.map((c) => getLabel('condicionesSalud', c)).join(', ')
       : 'Ninguna';
+
     out.push({
-      palette: p8,
+      palette: pFinal,
       content: (
-        <div style={{ textAlign: 'center', width: '100%', maxWidth: '480px' }}>
-          {/* ====== CAPTURABLE CARD — this div gets screenshot'd ====== */}
-          <div
-            style={{
-              backgroundColor: p8.bg,
-              padding: '40px 32px 32px',
-              borderRadius: '20px',
-              width: '100%',
-              maxWidth: '440px',
-              margin: '0 auto',
-            }}
-          >
-            <div style={{ fontSize: '56px', marginBottom: '4px' }}>{result.bird.emoji}</div>
-            <div style={{ ...s(p8).birdName, fontSize: '32px', marginBottom: '4px' }}>{result.bird.name}</div>
-            <div style={{ fontSize: '13px', opacity: 0.5, marginBottom: '20px', color: p8.text }}>
+        <div style={{ textAlign: 'center', width: '100%', maxWidth: '500px' }}>
+          {/* Bird + Name */}
+          <FadeIn delay={200}>
+            <div style={s(pFinal).small}>Tu resultado</div>
+            <div style={{ width: '100px', height: '100px', margin: '0 auto 8px' }}>
+              <Suspense fallback={<div style={s(pFinal).bigNum}>{result.bird.emoji}</div>}>
+                <Bird3DViewer variant={1} width="100px" height="100px" autoRotateSpeed={0.3} showControls={false} backgroundColor={null} cameraDistance={3.5} />
+              </Suspense>
+            </div>
+            <div style={{ ...s(pFinal).birdName, fontSize: '36px', marginBottom: '4px' }}>{result.bird.name}</div>
+            <div style={{ fontSize: '14px', opacity: 0.55, marginBottom: '20px', color: pFinal.text }}>
               {result.bird.subtitle}
             </div>
+          </FadeIn>
 
-            <div style={{ width: '100%' }}>
-              <div style={s(p8).summaryRow}>
-                <span style={s(p8).summaryLabel}>Código postal</span>
-                <span style={s(p8).summaryValue}>{answers.codigoPostal}</span>
+          {/* Score bars */}
+          <FadeIn delay={400}>
+            <div style={{ marginBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.6, marginBottom: '4px' }}>
+                <span>Contexto</span><span>{contextoLabel} ({result.contexto.raw}/6)</span>
               </div>
-              <div style={s(p8).summaryRow}>
-                <span style={s(p8).summaryLabel}>Zona</span>
-                <span style={s(p8).summaryValue}>Riesgo {cpRiskLevel}</span>
-              </div>
-              {dailyAir && (
-                <div style={s(p8).summaryRow}>
-                  <span style={s(p8).summaryLabel}>Aire diario</span>
-                  <span style={s(p8).summaryValue}>{dailyAir.toLocaleString()} L</span>
-                </div>
-              )}
-              <div style={s(p8).summaryRow}>
-                <span style={s(p8).summaryLabel}>Edad</span>
-                <span style={s(p8).summaryValue}>{edadLabel}</span>
-              </div>
-              <div style={s(p8).summaryRow}>
-                <span style={s(p8).summaryLabel}>Tabaco</span>
-                <span style={s(p8).summaryValue}>
-                  {fumaVal === 'fuma' ? 'Sí' : fumaVal === 'exfumador' ? 'Ex' : 'No'}
-                </span>
-              </div>
-              <div style={s(p8).summaryRow}>
-                <span style={s(p8).summaryLabel}>Ejercicio</span>
-                <span style={s(p8).summaryValue}>{getLabel('ejercicio', ejVal)}</span>
-              </div>
-              <div style={{ ...s(p8).summaryRow, borderBottom: 'none' }}>
-                <span style={s(p8).summaryLabel}>Condiciones</span>
-                <span style={{ ...s(p8).summaryValue, fontSize: '13px', maxWidth: '200px', textAlign: 'right' as const }}>
-                  {condLabel}
-                </span>
+              <div style={s(pFinal).bar}>
+                <div style={{ ...s(pFinal).barFill, width: `${(result.contexto.raw / 6) * 100}%` }} />
               </div>
             </div>
-
-            {/* Branding footer inside card */}
-            <div style={{
-              marginTop: '20px',
-              paddingTop: '16px',
-              borderTop: '1px solid rgba(255,255,255,0.1)',
-              fontSize: '12px',
-              opacity: 0.4,
-              color: p8.text,
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase' as const,
-            }}>
-              AIRE LIBRE — aire-libre-tawny.vercel.app/quiz
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.6, marginBottom: '4px' }}>
+                <span>Individuo</span><span>{individuoLabel} ({result.individuo.raw}/7)</span>
+              </div>
+              <div style={s(pFinal).bar}>
+                <div style={{ ...s(pFinal).barFill, width: `${(result.individuo.raw / 7) * 100}%` }} />
+              </div>
             </div>
-          </div>
-          {/* ====== END CAPTURABLE CARD ====== */}
+          </FadeIn>
 
-          {/* Share buttons — outside the card so they don't appear in screenshot */}
+          {/* Quote */}
           <FadeIn delay={600}>
-            <div style={{ marginTop: '24px', marginBottom: '8px' }}>
-              <div style={s(p8).small}>Comparte tu resultado</div>
+            <p style={{ fontSize: '15px', lineHeight: 1.7, opacity: 0.75, marginBottom: '28px' }}>
+              Ante la crisis de aire, <span style={{ fontWeight: 700, color: pFinal.accent }}>NO TE QUEDES EN CASA</span>. Sal y pide un cambio.
+            </p>
+          </FadeIn>
 
-              {/* Primary: share as image (mobile) or download */}
+          {/* Divider */}
+          <FadeIn delay={700}>
+            <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.12)', marginBottom: '24px' }} />
+          </FadeIn>
+
+          {/* Share section */}
+          <FadeIn delay={800}>
+            <div style={{ marginBottom: '20px' }}>
+              <div style={s(pFinal).small}>Comparte tu resultado</div>
               <button
-                style={s(p8).shareBtnPrimary}
+                style={s(pFinal).shareBtnPrimary}
                 onClick={handleShareImage}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
               >
                 📸 Compartir como imagen
               </button>
-
               {shareStatus && (
-                <div style={{ fontSize: '13px', opacity: 0.7, marginTop: '8px', color: p8.accent }}>
+                <div style={{ fontSize: '13px', opacity: 0.7, marginTop: '8px', color: pFinal.accent }}>
                   {shareStatus}
                 </div>
               )}
-
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '12px', flexWrap: 'wrap' as const }}>
                 <button
-                  style={s(p8).shareBtn}
+                  style={s(pFinal).shareBtn}
                   onClick={() => shareToTwitter(result.bird, result.total)}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
@@ -971,7 +902,7 @@ const QuizResult: React.FC = () => {
                   𝕏 Twitter
                 </button>
                 <button
-                  style={s(p8).shareBtn}
+                  style={s(pFinal).shareBtn}
                   onClick={() => shareToFacebook()}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
@@ -982,10 +913,10 @@ const QuizResult: React.FC = () => {
             </div>
           </FadeIn>
 
-          {/* CTA */}
-          <FadeIn delay={800}>
+          {/* CTA — Explorar el mapa */}
+          <FadeIn delay={1000}>
             <button
-              style={{ ...s(p8).cta, marginTop: '16px' }}
+              style={s(pFinal).cta}
               onClick={goToMap}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1019,7 +950,6 @@ const QuizResult: React.FC = () => {
     [total]
   );
 
-  // Keyboard — arrows + Enter + Space
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
@@ -1034,7 +964,6 @@ const QuizResult: React.FC = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [currentSlide, goTo, total]);
 
-  // Touch swipe
   const [touchX, setTouchX] = useState<number | null>(null);
 
   const slide = slides[currentSlide];

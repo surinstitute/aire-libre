@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense, lazy } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MapView from '../components/Map/MapView';
 import { coloniaService } from '../services/coloniaService';
 import type { Colonia } from '../types';
+
+const Bird3DViewer = lazy(() => import('../components/Bird/Bird3DViewer'));
 
 type Filtro = 'todos' | 'bajo' | 'medio' | 'alto';
 
@@ -139,6 +141,24 @@ export default function MapExplorer() {
       {/* Map */}
       <div style={{ width: '100%', height: '100%', paddingTop: 70 }}>
         <MapView colonias={coloniasFiltradas} onColoniaClick={setSelected} selectedCP={selected?.codigo_postal} />
+      </div>
+
+      {/* Floating bird mascot — bottom-left, above legend */}
+      <div style={{
+        position: 'absolute', bottom: 140, left: 24, width: 100, height: 100,
+        zIndex: 5, pointerEvents: 'none', opacity: 0.85,
+      }}>
+        <Suspense fallback={null}>
+          <Bird3DViewer
+            variant={2}
+            width="100px"
+            height="100px"
+            autoRotateSpeed={0.3}
+            showControls={false}
+            backgroundColor={null}
+            cameraDistance={3.5}
+          />
+        </Suspense>
       </div>
 
       {/* ── Info Panel ── */}
