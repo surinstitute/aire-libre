@@ -183,7 +183,7 @@ function parseGLB(buffer: ArrayBuffer): Promise<{
     
     // Center and normalize scale
     const box = new THREE.Box3().setFromObject(group);
-    const center = box.getCenter(new THREE.Vector3());
+    
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const normalizeScale = 2.0 / maxDim;

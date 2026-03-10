@@ -821,9 +821,7 @@ const QuizResult: React.FC = () => {
     const pFinal = slidePalettes[7];
     const contextoLabel = ['Favorable', 'Moderado', 'Perjudicial'][result.contexto.category];
     const individuoLabel = ['Resistente', 'Medianamente resistente', 'Altamente sensible'][result.individuo.category];
-    const condLabel = hasConds
-      ? conds.map((c) => getLabel('condicionesSalud', c)).join(', ')
-      : 'Ninguna';
+  
 
     out.push({
       palette: pFinal,
