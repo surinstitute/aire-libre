@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import logoSur from '../assets/Logo_SUR25.svg';
+import logoBC from '../assets/Logo_BreatheCities.svg';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -81,7 +82,22 @@ export default function Home() {
         }
         .hp-nav-btn:hover::after { width: 100%; }
 
-        .hp-logo { height: 38px; opacity: 0.92; }
+        /* ═══ LOGOS ═══ */
+        .hp-logos {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          opacity: 0;
+          transition: opacity 0.5s ease 0.3s;
+        }
+        .hp--in .hp-logos { opacity: 1; }
+        .hp-logo-sur { height: 52px; }
+        .hp-logo-divider {
+          width: 1px;
+          height: 36px;
+          background: rgba(255,255,255,0.35);
+        }
+        .hp-logo-bc { height: 36px; opacity: 0.92; }
 
         /* ═══ HERO ═══ */
         .hp-hero {
@@ -97,7 +113,7 @@ export default function Home() {
         .hp-title {
           position: absolute;
           font-family: 'Bebas Neue', 'Impact', sans-serif;
-          font-weight: 400; /* Bebas Neue only has 400 but looks bold */
+          font-weight: 400;
           color: #fff;
           text-transform: uppercase;
           line-height: 0.88;
@@ -280,6 +296,10 @@ export default function Home() {
           .hp-nav { padding: 14px 20px; }
           .hp-nav ul { gap: 14px; }
           .hp-nav-btn { font-size: 9px; letter-spacing: 0.8px; }
+          .hp-logo-sur { height: 40px; }
+          .hp-logo-bc { height: 28px; }
+          .hp-logos { gap: 12px; }
+          .hp-logo-divider { height: 28px; }
 
           .hp-title--aire {
             right: auto; left: 6%; top: 14%;
@@ -339,8 +359,10 @@ export default function Home() {
             </li>
           ))}
         </ul>
-        <div>
-          <img src={logoSur} alt="Instituto del Sur Urbano" className="hp-logo" />
+        <div className="hp-logos">
+          <img src={logoSur} alt="Instituto del Sur Urbano" className="hp-logo-sur" />
+          <div className="hp-logo-divider" />
+          <img src={logoBC} alt="Breathe Cities" className="hp-logo-bc" />
         </div>
       </nav>
 
@@ -363,7 +385,7 @@ export default function Home() {
         </p>
 
         <div className="hp-ctas">
-          <button className="hp-btn" onClick={() => navigate('/map')}>Ir al mapa</button>
+          <button className="hp-btn" onClick={() => navigate('/map')}>Ver mapa</button>
           <button className="hp-btn" onClick={() => navigate('/quiz')}>Hacer test</button>
         </div>
 

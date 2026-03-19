@@ -6,33 +6,53 @@ import type { QuizAnswers } from '../data/quizData';
 import type { Colonia } from '../types';
 
 // ============================================================
-// Styles
+// Styles — Aire Libre blue theme
 // ============================================================
+
+const C = {
+  bg: '#7CB9E2',
+  white: '#fff',
+  dark: '#1C2333',
+  accent: '#fff',
+  dimmed: 'rgba(255,255,255,0.6)',
+  cardBg: 'rgba(255,255,255,0.12)',
+  cardBgHover: 'rgba(255,255,255,0.2)',
+  cardBorder: 'rgba(255,255,255,0.25)',
+  cardSelected: 'rgba(255,255,255,0.25)',
+  selectedBorder: '#fff',
+  inputBg: 'rgba(255,255,255,0.15)',
+  inputBorder: 'rgba(255,255,255,0.3)',
+  inputFocus: '#fff',
+  btnBg: 'rgba(28,35,51,0.65)',
+  btnBorder: 'rgba(255,255,255,0.35)',
+  progressBg: 'rgba(255,255,255,0.15)',
+  progressFill: '#fff',
+  success: '#86efac',
+  error: '#fca5a5',
+};
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#F5F0E8',
+    background: 'linear-gradient(170deg, #9DD0F3 0%, #7CB9E2 30%, #6AADDA 60%, #5A9FCC 100%)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    fontFamily: "'Lora', Georgia, serif",
-    color: '#2D2D2D',
+    fontFamily: "'Space Mono', monospace",
+    color: C.white,
     position: 'relative',
     overflow: 'hidden',
   },
   progressBarContainer: {
     position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
+    top: 0, left: 0, right: 0,
     height: '4px',
-    backgroundColor: 'rgba(166, 44, 43, 0.15)',
+    backgroundColor: C.progressBg,
     zIndex: 100,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#A62C2B',
+    backgroundColor: C.progressFill,
     transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
     borderRadius: '0 2px 2px 0',
   },
@@ -46,16 +66,16 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 10,
   },
   logo: {
-    fontFamily: "'Playfair Display', Georgia, serif",
-    fontSize: '20px',
-    fontWeight: 700,
-    color: '#A62C2B',
-    letterSpacing: '2px',
+    fontFamily: "'Bebas Neue', sans-serif",
+    fontSize: '24px',
+    fontWeight: 400,
+    color: C.white,
+    letterSpacing: '4px',
     textTransform: 'uppercase' as const,
   },
   stepCounter: {
-    fontSize: '14px',
-    color: '#8B7E74',
+    fontSize: '13px',
+    color: C.dimmed,
     fontVariantNumeric: 'tabular-nums',
   },
   content: {
@@ -70,89 +90,88 @@ const styles: Record<string, React.CSSProperties> = {
   },
   blockLabel: {
     display: 'inline-block',
-    fontSize: '11px',
-    fontWeight: 600,
+    fontSize: '10px',
+    fontWeight: 700,
     letterSpacing: '2.5px',
     textTransform: 'uppercase' as const,
-    color: '#A62C2B',
+    color: C.dimmed,
     marginBottom: '12px',
-    opacity: 0.8,
   },
   questionText: {
-    fontFamily: "'Playfair Display', Georgia, serif",
-    fontSize: '28px',
-    fontWeight: 600,
-    lineHeight: 1.35,
-    color: '#2D2D2D',
+    fontFamily: "'Bebas Neue', sans-serif",
+    fontSize: '36px',
+    fontWeight: 400,
+    lineHeight: 1.15,
+    color: C.white,
     marginBottom: '8px',
     textAlign: 'center' as const,
+    letterSpacing: '1px',
   },
   helpText: {
-    fontSize: '15px',
-    color: '#8B7E74',
-    lineHeight: 1.5,
+    fontSize: '13px',
+    color: C.dimmed,
+    lineHeight: 1.6,
     textAlign: 'center' as const,
     marginBottom: '32px',
     maxWidth: '480px',
   },
   enterHint: {
-    fontSize: '13px',
-    color: '#8B7E74',
+    fontSize: '12px',
+    color: C.dimmed,
     marginTop: '16px',
     textAlign: 'center' as const,
-    opacity: 0.6,
+    opacity: 0.7,
   },
   enterKey: {
     display: 'inline-block',
     padding: '2px 8px',
-    backgroundColor: 'rgba(166, 44, 43, 0.08)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: 600,
-    color: '#A62C2B',
+    fontSize: '11px',
+    fontWeight: 700,
+    color: C.white,
     marginLeft: '4px',
   },
   optionsContainer: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
+    gap: '10px',
     width: '100%',
     maxWidth: '440px',
   },
   option: {
-    padding: '16px 20px',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    border: '2px solid transparent',
-    borderRadius: '12px',
-    fontSize: '16px',
+    padding: '14px 18px',
+    backgroundColor: C.cardBg,
+    border: `1.5px solid transparent`,
+    borderRadius: '10px',
+    fontSize: '14px',
     lineHeight: 1.4,
-    color: '#2D2D2D',
+    color: C.white,
     cursor: 'pointer',
     transition: 'all 0.25s ease',
     textAlign: 'left' as const,
-    fontFamily: "'Lora', Georgia, serif",
+    fontFamily: "'Space Mono', monospace",
     backdropFilter: 'blur(8px)',
   },
   optionSelected: {
-    backgroundColor: 'rgba(166, 44, 43, 0.08)',
-    borderColor: '#A62C2B',
-    color: '#A62C2B',
-    fontWeight: 600,
+    backgroundColor: C.cardSelected,
+    borderColor: C.selectedBorder,
+    fontWeight: 700,
   },
   optionHover: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderColor: 'rgba(166, 44, 43, 0.3)',
+    backgroundColor: C.cardBgHover,
+    borderColor: C.cardBorder,
   },
   inputField: {
     width: '100%',
     maxWidth: '440px',
-    padding: '16px 20px',
-    fontSize: '18px',
-    fontFamily: "'Lora', Georgia, serif",
-    color: '#2D2D2D',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    border: '2px solid rgba(166, 44, 43, 0.2)',
-    borderRadius: '12px',
+    padding: '14px 18px',
+    fontSize: '16px',
+    fontFamily: "'Space Mono', monospace",
+    color: C.white,
+    backgroundColor: C.inputBg,
+    border: `1.5px solid ${C.inputBorder}`,
+    borderRadius: '10px',
     outline: 'none',
     transition: 'all 0.25s ease',
     backdropFilter: 'blur(8px)',
@@ -165,58 +184,58 @@ const styles: Record<string, React.CSSProperties> = {
   },
   inputSuffix: {
     position: 'absolute',
-    right: '20px',
+    right: '18px',
     top: '50%',
     transform: 'translateY(-50%)',
-    fontSize: '16px',
-    color: '#8B7E74',
+    fontSize: '14px',
+    color: C.dimmed,
     pointerEvents: 'none' as const,
   },
   cpStatus: {
     marginTop: '12px',
-    fontSize: '14px',
+    fontSize: '13px',
     textAlign: 'center' as const,
     transition: 'all 0.3s ease',
   },
   footer: {
     position: 'fixed',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, left: 0, right: 0,
     padding: '20px 32px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 240, 232, 0.9)',
+    backgroundColor: 'rgba(90,159,204,0.85)',
     backdropFilter: 'blur(12px)',
-    borderTop: '1px solid rgba(166, 44, 43, 0.1)',
+    borderTop: '1px solid rgba(255,255,255,0.1)',
     zIndex: 50,
   },
   btnBack: {
-    padding: '12px 24px',
-    fontSize: '15px',
-    fontFamily: "'Lora', Georgia, serif",
-    color: '#8B7E74',
+    padding: '11px 22px',
+    fontSize: '13px',
+    fontFamily: "'Space Mono', monospace",
+    color: C.dimmed,
     backgroundColor: 'transparent',
-    border: '1.5px solid #D4CBC0',
-    borderRadius: '10px',
+    border: `1.5px solid rgba(255,255,255,0.25)`,
+    borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.25s ease',
+    fontWeight: 700,
   },
   btnNext: {
-    padding: '12px 32px',
-    fontSize: '15px',
-    fontWeight: 600,
-    fontFamily: "'Lora', Georgia, serif",
-    color: '#F5F0E8',
-    backgroundColor: '#A62C2B',
-    border: 'none',
-    borderRadius: '10px',
+    padding: '11px 28px',
+    fontSize: '13px',
+    fontWeight: 700,
+    fontFamily: "'Space Mono', monospace",
+    color: C.white,
+    backgroundColor: C.btnBg,
+    border: `1.5px solid ${C.btnBorder}`,
+    borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.25s ease',
+    backdropFilter: 'blur(8px)',
   },
   btnDisabled: {
-    opacity: 0.4,
+    opacity: 0.35,
     cursor: 'not-allowed',
   },
   welcomeContainer: {
@@ -229,37 +248,39 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: '560px',
   },
   welcomeTitle: {
-    fontFamily: "'Playfair Display', Georgia, serif",
-    fontSize: '42px',
-    fontWeight: 700,
-    color: '#A62C2B',
+    fontFamily: "'Bebas Neue', sans-serif",
+    fontSize: '52px',
+    fontWeight: 400,
+    color: C.white,
     marginBottom: '24px',
-    lineHeight: 1.15,
+    lineHeight: 1.05,
+    letterSpacing: '2px',
   },
   welcomeText: {
-    fontSize: '17px',
+    fontSize: '14px',
     lineHeight: 1.7,
-    color: '#5A5149',
+    color: 'rgba(255,255,255,0.8)',
     marginBottom: '16px',
   },
   welcomeDisclaimer: {
-    fontSize: '14px',
-    color: '#8B7E74',
+    fontSize: '12px',
+    color: C.dimmed,
     fontStyle: 'italic',
     marginBottom: '40px',
   },
   btnStart: {
-    padding: '16px 48px',
-    fontSize: '17px',
-    fontWeight: 600,
-    fontFamily: "'Lora', Georgia, serif",
-    color: '#F5F0E8',
-    backgroundColor: '#A62C2B',
-    border: 'none',
-    borderRadius: '12px',
+    padding: '14px 44px',
+    fontSize: '14px',
+    fontWeight: 700,
+    fontFamily: "'Space Mono', monospace",
+    color: C.white,
+    backgroundColor: C.btnBg,
+    border: `1.5px solid ${C.btnBorder}`,
+    borderRadius: '10px',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     letterSpacing: '0.5px',
+    backdropFilter: 'blur(8px)',
   },
   blockTransition: {
     display: 'flex',
@@ -270,26 +291,26 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0 24px',
   },
   blockNumber: {
-    fontSize: '13px',
-    fontWeight: 600,
+    fontSize: '11px',
+    fontWeight: 700,
     letterSpacing: '3px',
     textTransform: 'uppercase' as const,
-    color: '#A62C2B',
-    opacity: 0.6,
+    color: C.dimmed,
     marginBottom: '16px',
   },
   blockTitle: {
-    fontFamily: "'Playfair Display', Georgia, serif",
-    fontSize: '36px',
-    fontWeight: 700,
-    color: '#2D2D2D',
-    lineHeight: 1.25,
+    fontFamily: "'Bebas Neue', sans-serif",
+    fontSize: '44px',
+    fontWeight: 400,
+    color: C.white,
+    lineHeight: 1.1,
     marginBottom: '12px',
+    letterSpacing: '2px',
   },
   blockSubtitle: {
-    fontSize: '16px',
+    fontSize: '14px',
     lineHeight: 1.6,
-    color: '#8B7E74',
+    color: C.dimmed,
     maxWidth: '440px',
   },
 };
@@ -338,19 +359,16 @@ const Quiz: React.FC = () => {
   const [cpLoading, setCpLoading] = useState(false);
   const [cpError, setCpError] = useState(false);
 
-  // Lock to prevent double-advance
   const isAdvancing = useRef(false);
 
   const currentQuestion = quizQuestions[currentIndex];
   const totalQuestions = quizQuestions.length;
   const progress = ((currentIndex + 1) / totalQuestions) * 100;
 
-  // Reset lock when index or screen changes
   useEffect(() => {
     isAdvancing.current = false;
   }, [currentIndex, screen]);
 
-  // Validate CP against Supabase
   useEffect(() => {
     const cp = (answers.codigoPostal as string) || '';
     if (cp.length < 5) {
@@ -379,7 +397,6 @@ const Quiz: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [answers.codigoPostal]);
 
-  // Check if answered
   const isCurrentAnswered = useCallback((): boolean => {
     if (!currentQuestion) return false;
     const answer = answers[currentQuestion.id];
@@ -389,7 +406,6 @@ const Quiz: React.FC = () => {
     return String(answer).trim().length > 0;
   }, [answers, currentQuestion, cpColonia]);
 
-  // Handlers
   const handleMultiSelect = (questionId: string, value: string) => {
     setAnswers((prev) => {
       const current = (prev[questionId] as string[]) || [];
@@ -419,7 +435,6 @@ const Quiz: React.FC = () => {
 
   const saveAndFinish = useCallback(
     (finalAnswers: QuizAnswers) => {
-      // Instead of navigating, show air calculator prompt
       setAnswers(finalAnswers);
       setScreen('airCalcPrompt');
       setAnimKey((k) => k + 1);
@@ -427,10 +442,9 @@ const Quiz: React.FC = () => {
     []
   );
 
-  // Core advance function with lock
   const advanceToNext = useCallback(
     (overrideAnswers?: QuizAnswers) => {
-      if (isAdvancing.current) return; // prevent double
+      if (isAdvancing.current) return;
       isAdvancing.current = true;
 
       const finalAnswers = overrideAnswers || answers;
@@ -472,7 +486,6 @@ const Quiz: React.FC = () => {
     setAnimKey((k) => k + 1);
   }, []);
 
-  // Single-select: set answer + auto-advance after delay
   const handleSingleSelectAndAdvance = (questionId: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
     setTimeout(() => {
@@ -481,11 +494,6 @@ const Quiz: React.FC = () => {
     }, 350);
   };
 
-  // Enter key handler
-  // - Welcome/BlockIntro: Enter continues
-  // - Text/Number questions: Enter advances if answered
-  // - Single-select: Enter does NOT advance (click auto-advances)
-  // - Multi-select: Enter does NOT advance (use Siguiente button)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Enter') return;
@@ -497,18 +505,21 @@ const Quiz: React.FC = () => {
         e.preventDefault();
         continueFromBlockIntro();
       } else if (screen === 'question') {
-        // Only advance with Enter on text/number inputs
         const type = currentQuestion?.type;
         if ((type === 'text' || type === 'number') && isCurrentAnswered()) {
           e.preventDefault();
           advanceToNext();
         }
-        // For single/multi: do nothing on Enter
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [screen, currentQuestion, isCurrentAnswered, advanceToNext, startQuiz, continueFromBlockIntro]);
+
+  // ── Google Fonts ──
+  const fontLink = (
+    <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');`}</style>
+  );
 
   // --------------------------------------------------------
   // Welcome
@@ -516,6 +527,7 @@ const Quiz: React.FC = () => {
   if (screen === 'welcome') {
     return (
       <div style={styles.container}>
+        {fontLink}
         <div style={styles.header}>
           <div style={styles.logo}>AIRE LIBRE</div>
         </div>
@@ -543,7 +555,7 @@ const Quiz: React.FC = () => {
                 onClick={startQuiz}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(166, 44, 43, 0.3)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
@@ -569,6 +581,7 @@ const Quiz: React.FC = () => {
     const q = quizQuestions[currentIndex];
     return (
       <div style={styles.container}>
+        {fontLink}
         <div style={styles.progressBarContainer}>
           <div style={{ ...styles.progressBarFill, width: `${progress}%` }} />
         </div>
@@ -592,7 +605,7 @@ const Quiz: React.FC = () => {
             onClick={continueFromBlockIntro}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(166, 44, 43, 0.25)';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
@@ -607,11 +620,12 @@ const Quiz: React.FC = () => {
   }
 
   // --------------------------------------------------------
-  // Air Calculator Prompt — "¿Quieres saber cuánto aire respiras?"
+  // Air Calculator Prompt
   // --------------------------------------------------------
   if (screen === 'airCalcPrompt') {
     return (
       <div style={styles.container}>
+        {fontLink}
         <div style={styles.progressBarContainer}>
           <div style={{ ...styles.progressBarFill, width: '100%' }} />
         </div>
@@ -623,26 +637,27 @@ const Quiz: React.FC = () => {
             <div style={{ textAlign: 'center', maxWidth: '520px', padding: '0 24px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌬️</div>
               <h2 style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: '28px',
-                fontWeight: 700,
-                color: '#2D2D2D',
+                fontFamily: "'Bebas Neue', sans-serif",
+                fontSize: '36px',
+                fontWeight: 400,
+                color: C.white,
                 marginBottom: '16px',
-                lineHeight: 1.3,
+                lineHeight: 1.1,
+                letterSpacing: '1px',
               }}>
                 ¿Quieres saber cuánto aire respiras al día?
               </h2>
               <p style={{
-                fontSize: '16px',
-                color: '#8B7E74',
+                fontSize: '14px',
+                color: C.dimmed,
                 lineHeight: 1.7,
                 marginBottom: '8px',
               }}>
                 Con tu peso y estatura podemos calcular cuántos litros de aire inhala tu cuerpo cada día.
               </p>
               <p style={{
-                fontSize: '13px',
-                color: '#A09689',
+                fontSize: '12px',
+                color: 'rgba(255,255,255,0.45)',
                 fontStyle: 'italic',
                 marginBottom: '32px',
               }}>
@@ -654,7 +669,7 @@ const Quiz: React.FC = () => {
                   onClick={() => { setScreen('airCalcInput'); setAnimKey((k) => k + 1); }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(166, 44, 43, 0.3)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
@@ -666,12 +681,12 @@ const Quiz: React.FC = () => {
                 <button
                   style={{
                     ...styles.btnBack,
-                    fontSize: '15px',
-                    padding: '12px 32px',
+                    fontSize: '13px',
+                    padding: '11px 28px',
                   }}
                   onClick={() => finishQuiz(answers)}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; e.currentTarget.style.color = '#A62C2B'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#D4CBC0'; e.currentTarget.style.color = '#8B7E74'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.white; e.currentTarget.style.color = C.white; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = C.dimmed; }}
                 >
                   No, ver mis resultados
                 </button>
@@ -684,7 +699,7 @@ const Quiz: React.FC = () => {
   }
 
   // --------------------------------------------------------
-  // Air Calculator Input — peso + estatura
+  // Air Calculator Input
   // --------------------------------------------------------
   if (screen === 'airCalcInput') {
     const pesoVal = (answers.peso as string) || '';
@@ -693,6 +708,7 @@ const Quiz: React.FC = () => {
 
     return (
       <div style={styles.container}>
+        {fontLink}
         <div style={styles.progressBarContainer}>
           <div style={{ ...styles.progressBarFill, width: '100%' }} />
         </div>
@@ -704,18 +720,19 @@ const Quiz: React.FC = () => {
             <div style={{ textAlign: 'center', maxWidth: '420px', padding: '0 24px' }}>
               <div style={{ fontSize: '36px', marginBottom: '12px' }}>🌬️</div>
               <h2 style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#2D2D2D',
+                fontFamily: "'Bebas Neue', sans-serif",
+                fontSize: '32px',
+                fontWeight: 400,
+                color: C.white,
                 marginBottom: '24px',
+                letterSpacing: '1px',
               }}>
                 Calculadora de aire
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
                 <div style={styles.inputWrapper}>
-                  <label style={{ fontSize: '14px', color: '#8B7E74', marginBottom: '6px', display: 'block', textAlign: 'left' }}>¿Cuánto pesas?</label>
+                  <label style={{ fontSize: '12px', color: C.dimmed, marginBottom: '6px', display: 'block', textAlign: 'left' }}>¿Cuánto pesas?</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <input
                       type="number"
@@ -723,8 +740,8 @@ const Quiz: React.FC = () => {
                       placeholder="Ej: 70"
                       value={pesoVal}
                       onChange={(e) => handleInputChange('peso', e.target.value)}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(166, 44, 43, 0.2)'; }}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = C.white; }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
                       autoFocus
                     />
                     <span style={styles.inputSuffix}>kg</span>
@@ -732,7 +749,7 @@ const Quiz: React.FC = () => {
                 </div>
 
                 <div style={styles.inputWrapper}>
-                  <label style={{ fontSize: '14px', color: '#8B7E74', marginBottom: '6px', display: 'block', textAlign: 'left' }}>¿Cuántos centímetros mides?</label>
+                  <label style={{ fontSize: '12px', color: C.dimmed, marginBottom: '6px', display: 'block', textAlign: 'left' }}>¿Cuántos centímetros mides?</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <input
                       type="number"
@@ -740,8 +757,8 @@ const Quiz: React.FC = () => {
                       placeholder="Ej: 170"
                       value={estaturaVal}
                       onChange={(e) => handleInputChange('estatura', e.target.value)}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(166, 44, 43, 0.2)'; }}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = C.white; }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
                     />
                     <span style={styles.inputSuffix}>cm</span>
                   </div>
@@ -754,7 +771,7 @@ const Quiz: React.FC = () => {
                 onMouseEnter={(e) => {
                   if (bothFilled) {
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(166, 44, 43, 0.3)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -767,13 +784,13 @@ const Quiz: React.FC = () => {
               <button
                 style={{
                   ...styles.btnBack,
-                  fontSize: '14px',
+                  fontSize: '12px',
                   padding: '10px 24px',
                   marginTop: '12px',
                 }}
                 onClick={() => { setScreen('airCalcPrompt'); setAnimKey((k) => k + 1); }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; e.currentTarget.style.color = '#A62C2B'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#D4CBC0'; e.currentTarget.style.color = '#8B7E74'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.white; e.currentTarget.style.color = C.white; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = C.dimmed; }}
               >
                 Atrás
               </button>
@@ -792,6 +809,7 @@ const Quiz: React.FC = () => {
 
   return (
     <div style={styles.container}>
+      {fontLink}
       <div style={styles.progressBarContainer}>
         <div style={{ ...styles.progressBarFill, width: `${progress}%` }} />
       </div>
@@ -817,12 +835,12 @@ const Quiz: React.FC = () => {
                   value={(answers[currentQuestion.id] as string) || ''}
                   onChange={(e) => handleInputChange(currentQuestion.id, e.target.value)}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#A62C2B';
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.85)';
+                    e.currentTarget.style.borderColor = C.white;
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)';
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(166, 44, 43, 0.2)';
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)';
+                    e.currentTarget.style.borderColor = C.inputBorder;
+                    e.currentTarget.style.backgroundColor = C.inputBg;
                   }}
                   autoFocus
                 />
@@ -831,12 +849,12 @@ const Quiz: React.FC = () => {
                 )}
                 {currentQuestion.id === 'codigoPostal' && (
                   <div style={styles.cpStatus}>
-                    {cpLoading && <span style={{ color: '#8B7E74' }}>Buscando tu zona...</span>}
+                    {cpLoading && <span style={{ color: C.dimmed }}>Buscando tu zona...</span>}
                     {cpColonia && !cpLoading && (
-                      <span style={{ color: '#2D7A4B' }}>✓ {cpColonia.colonias}, {cpColonia.municipio}</span>
+                      <span style={{ color: C.success }}>✓ {cpColonia.colonias}, {cpColonia.municipio}</span>
                     )}
                     {cpError && !cpLoading && (
-                      <span style={{ color: '#A62C2B' }}>
+                      <span style={{ color: C.error }}>
                         No encontramos ese código postal. Intenta con otro.
                       </span>
                     )}
@@ -850,7 +868,7 @@ const Quiz: React.FC = () => {
               </div>
             )}
 
-            {/* Single select — click auto-advances */}
+            {/* Single select */}
             {currentQuestion.type === 'single' && (
               <div style={styles.optionsContainer}>
                 {currentQuestion.options?.map((opt) => {
@@ -875,7 +893,7 @@ const Quiz: React.FC = () => {
               </div>
             )}
 
-            {/* Multi select — explicit Siguiente button needed */}
+            {/* Multi select */}
             {currentQuestion.type === 'multi' && (
               <>
                 <div style={styles.optionsContainer}>
@@ -898,18 +916,18 @@ const Quiz: React.FC = () => {
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
                           <span
                             style={{
-                              width: '20px',
-                              height: '20px',
+                              width: '18px',
+                              height: '18px',
                               borderRadius: '4px',
-                              border: isSelected ? '2px solid #A62C2B' : '2px solid #D4CBC0',
-                              backgroundColor: isSelected ? '#A62C2B' : 'transparent',
+                              border: isSelected ? '2px solid #fff' : '2px solid rgba(255,255,255,0.3)',
+                              backgroundColor: isSelected ? '#fff' : 'transparent',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               flexShrink: 0,
                               transition: 'all 0.2s ease',
-                              fontSize: '12px',
-                              color: '#fff',
+                              fontSize: '11px',
+                              color: '#1C2333',
                             }}
                           >
                             {isSelected && '✓'}
@@ -936,8 +954,8 @@ const Quiz: React.FC = () => {
         <button
           style={styles.btnBack}
           onClick={goBack}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A62C2B'; e.currentTarget.style.color = '#A62C2B'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#D4CBC0'; e.currentTarget.style.color = '#8B7E74'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.white; e.currentTarget.style.color = C.white; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = C.dimmed; }}
         >
           Atrás
         </button>
@@ -947,7 +965,7 @@ const Quiz: React.FC = () => {
           onMouseEnter={(e) => {
             if (answered) {
               e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(166, 44, 43, 0.25)';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
             }
           }}
           onMouseLeave={(e) => {
