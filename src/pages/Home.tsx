@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <div className={`hp ${loaded ? 'hp--in' : ''}`}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -40,7 +40,6 @@ export default function Home() {
 
         .hp-title {
           position: absolute;
-          font-family: 'Bebas Neue', 'Impact', sans-serif;
           font-weight: 400;
           color: #fff;
           text-transform: uppercase;
@@ -49,7 +48,9 @@ export default function Home() {
           user-select: none;
         }
 
+        /* AIRE — Boogaloo (rounded display) */
         .hp-title--aire {
+          font-family: 'Lilita One', cursive;
           font-size: clamp(120px, 16vw, 220px);
           right: 55%;
           top: 20%;
@@ -61,7 +62,9 @@ export default function Home() {
         }
         .hp--in .hp-title--aire { opacity: 1; transform: translateX(0); }
 
+        /* LIBRE — Bebas Neue (condensed) */
         .hp-title--libre {
+          font-family: 'Bebas Neue', 'Impact', sans-serif;
           font-size: clamp(100px, 13vw, 190px);
           left: 53%;
           top: 24%;
@@ -112,13 +115,16 @@ export default function Home() {
         }
         .hp--in .hp-desc { opacity: 0.85; transform: translateY(0); }
 
+        /* CTAs — centered */
         .hp-ctas {
-          position: absolute; right: 14%; top: 58%;
+          position: absolute;
+          left: 50%; top: 62%;
+          transform: translateX(-50%) translateY(16px);
           display: flex; gap: 12px; z-index: 12;
-          opacity: 0; transform: translateY(16px);
+          opacity: 0;
           transition: opacity 0.6s ease 0.65s, transform 0.6s ease 0.65s;
         }
-        .hp--in .hp-ctas { opacity: 1; transform: translateY(0); }
+        .hp--in .hp-ctas { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         .hp-btn {
           padding: 12px 24px; border-radius: 8px;
@@ -161,19 +167,27 @@ export default function Home() {
         @media (max-width: 1100px) {
           .hp-title--aire { right: 52%; top: 22%; }
           .hp-title--libre { left: 48%; top: 26%; }
-          .hp-ctas { right: 8%; }
           .hp-desc { left: 6%; }
         }
 
         @media (max-width: 768px) {
-          .hp-title--aire { right: auto; left: 6%; top: 14%; font-size: clamp(72px, 20vw, 120px) !important; }
-          .hp-title--libre { left: auto; right: 6%; top: 22%; font-size: clamp(60px, 17vw, 110px) !important; }
+          .hp-title--aire {
+            right: auto; left: 6%; top: 14%;
+            font-size: clamp(72px, 20vw, 120px) !important;
+          }
+          .hp-title--libre {
+            left: auto; right: 6%; top: 22%;
+            font-size: clamp(60px, 17vw, 110px) !important;
+          }
           .hp-model { width: clamp(180px, 50vw, 280px); height: clamp(160px, 45vw, 250px); top: 46%; }
           .hp-desc { left: 6%; top: 54%; font-size: 10px; max-width: 220px; }
-          .hp-ctas { right: auto; left: 50%; top: auto; bottom: 24%; transform: translateX(-50%); }
-          .hp--in .hp-ctas { transform: translateX(-50%); }
+          .hp-ctas { top: auto; bottom: 24%; }
           .hp-tagline { bottom: 16%; font-size: 11px; }
-          .hp-quote { right: auto; left: 50%; bottom: 4%; transform: translateX(-50%); text-align: center; font-size: 9px; }
+          .hp-quote {
+            right: auto; left: 50%; bottom: 4%;
+            transform: translateX(-50%);
+            text-align: center; font-size: 9px;
+          }
           .hp--in .hp-quote { transform: translateX(-50%); }
         }
       `}</style>
