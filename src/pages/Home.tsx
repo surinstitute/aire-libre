@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
+
+const HomeModel3D = lazy(() => import('../components/Bird/FrogBirdViewer'));
 
 export default function Home() {
   const navigate = useNavigate();
@@ -48,7 +50,6 @@ export default function Home() {
           user-select: none;
         }
 
-        /* AIRE — Boogaloo (rounded display) */
         .hp-title--aire {
           font-family: 'Lilita One', cursive;
           font-size: clamp(120px, 16vw, 220px);
@@ -62,7 +63,6 @@ export default function Home() {
         }
         .hp--in .hp-title--aire { opacity: 1; transform: translateX(0); }
 
-        /* LIBRE — Bebas Neue (condensed) */
         .hp-title--libre {
           font-family: 'Bebas Neue', 'Impact', sans-serif;
           font-size: clamp(100px, 13vw, 190px);
@@ -78,31 +78,15 @@ export default function Home() {
 
         .hp-model {
           position: absolute;
-          left: 50%; top: 48%;
-          transform: translate(-50%, -52%);
-          width: clamp(260px, 32vw, 420px);
-          height: clamp(240px, 30vw, 380px);
+          left: 50%; top: 46%;
+          transform: translate(-50%, -50%);
+          width: clamp(300px, 38vw, 500px);
+          height: clamp(280px, 36vw, 460px);
           z-index: 8;
-          display: flex; align-items: center; justify-content: center;
           opacity: 0;
           transition: opacity 0.8s ease 0.35s;
         }
         .hp--in .hp-model { opacity: 1; }
-
-        .hp-model-inner {
-          width: 100%; height: 100%;
-          border-radius: 50%;
-          border: 1.5px dashed rgba(255,255,255,0.18);
-          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-          background: radial-gradient(circle at 45% 40%, rgba(255,255,255,0.06), transparent 65%);
-        }
-        .hp-model-emoji { font-size: 40px; opacity: 0.25; }
-        .hp-model-label {
-          font-size: 9px; color: rgba(255,255,255,0.22);
-          letter-spacing: 2.5px; text-transform: uppercase;
-          text-align: center; line-height: 1.6;
-          font-family: 'Space Mono', monospace;
-        }
 
         .hp-desc {
           position: absolute; left: 8%; top: 56%;
@@ -115,7 +99,6 @@ export default function Home() {
         }
         .hp--in .hp-desc { opacity: 0.85; transform: translateY(0); }
 
-        /* CTAs — centered */
         .hp-ctas {
           position: absolute;
           left: 50%; top: 62%;
@@ -179,7 +162,11 @@ export default function Home() {
             left: auto; right: 6%; top: 22%;
             font-size: clamp(60px, 17vw, 110px) !important;
           }
-          .hp-model { width: clamp(180px, 50vw, 280px); height: clamp(160px, 45vw, 250px); top: 46%; }
+          .hp-model {
+            width: clamp(220px, 60vw, 340px);
+            height: clamp(200px, 55vw, 300px);
+            top: 44%;
+          }
           .hp-desc { left: 6%; top: 54%; font-size: 10px; max-width: 220px; }
           .hp-ctas { top: auto; bottom: 24%; }
           .hp-tagline { bottom: 16%; font-size: 11px; }
@@ -197,10 +184,28 @@ export default function Home() {
         <h1 className="hp-title hp-title--libre">LIBRE</h1>
 
         <div className="hp-model">
-          <div className="hp-model-inner">
-            <div className="hp-model-emoji">🐸🐦</div>
-            <div className="hp-model-label">Modelo 3D<br />próximamente</div>
-          </div>
+          <Suspense fallback={
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{
+                width: 36, height: 36,
+                border: '3px solid rgba(255,255,255,0.2)',
+                borderTopColor: '#fff',
+                borderRadius: '50%',
+                animation: 'hp-spin 1s linear infinite',
+              }} />
+              <style>{`@keyframes hp-spin{to{transform:rotate(360deg)}}`}</style>
+            </div>
+          }>
+            <HomeModel3D
+              width="100%"
+              height="100%"
+              autoRotateSpeed={0}
+              backgroundColor={null}
+              cameraDistance={2}
+              animation="idle"
+              
+            />
+          </Suspense>
         </div>
 
         <p className="hp-desc">
