@@ -534,12 +534,12 @@ const Quiz: React.FC = () => {
         <div style={{ ...styles.content, justifyContent: 'center' }}>
           <FadeIn>
             <div style={styles.welcomeContainer}>
-              <h1 style={styles.welcomeTitle}>Conoce tu nivel de exposición</h1>
+              <h1 style={styles.welcomeTitle}>Conoce tu nivel de riesgo en diferentes puntos de la ciudad</h1>
               <p style={styles.welcomeText}>
                 Te damos la bienvenida a este test. Aquí conocerás, de forma
-                personalizada, tu nivel de exposición a la calidad del aire, así como
-                las vulnerabilidades sociales y biológicas que influyen en tu nivel de
-                riesgo.
+                personalizada, tu nivel de riesgo según la calidad del aire, así como
+                las vulnerabilidades sociales y biológicas que influyen en tu
+                exposición.
               </p>
               <p style={styles.welcomeText}>
                 Esta es una herramienta para entender cómo el entorno, tus hábitos y tu

@@ -185,7 +185,7 @@ export function calculateContexto(
   let raw = 0;
 
   // Q1: CP risk → 0/1/2
-  const cpMap: Record<string, number> = { bajo: 0, medio: 1, alto: 2 };
+  const cpMap: Record<string, number> = { alto: 0, medio: 1, bajo: 2 };
   raw += cpMap[cpRiskLevel] ?? 1;
 
   // Q7: Redes de apoyo → 0/1/2

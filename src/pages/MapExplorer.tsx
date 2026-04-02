@@ -4,18 +4,18 @@ import MapView from '../components/Map/MapView';
 import { coloniaService } from '../services/coloniaService';
 import type { Colonia } from '../types';
 
-const Bird3DViewer = lazy(() => import('../components/Bird/Bird3DViewer'));
+const FrogBirdViewer = lazy(() => import('../components/Bird/FrogBirdViewer'));
 
 type Filtro = 'todos' | 'bajo' | 'medio' | 'alto';
 
-const CUMPL_LABEL: Record<string, string> = { bajo: 'BAJO', medio: 'PROMEDIO', alto: 'MEJOR CUMPLIMIENTO' };
+const CUMPL_LABEL: Record<string, string> = { bajo: 'BAJO', medio: 'PROMEDIO', alto: 'MEJOR EQUIDAD' };
 const CUMPL_COLORS: Record<string, string> = { bajo: '#ef4444', medio: '#eab308', alto: '#22c55e' };
 
 // ── Tooltips (unchanged) ──
 const TT: Record<string, { title: string; body: string }> = {
-  'cumplimiento_bajo': { title: 'Cumplimiento Bajo', body: `Estar en una colonia con cumplimiento bajo significa formar parte del tercio de la ciudad donde ejercer derechos —como respirar aire limpio y acceder a servicios de salud— es más difícil. Aquí la calidad del aire se cruza con otros factores: infraestructura, acceso a atención médica, condiciones socioeconómicas y capacidad para resistir eventos climáticos extremos.\n\nY algo importante: esto no quiere decir que en el resto de la ciudad todo esté bien. Si observamos únicamente el aire, el 99% de los días en la Zona Metropolitana del Valle de México superan los niveles considerados saludables por la Organización Mundial de la Salud.\n\nLa diferencia no es si hay problema o no.\nEs quién lo enfrenta con más desventaja.` },
-  'cumplimiento_medio': { title: 'Cumplimiento Promedio', body: `Una colonia con cumplimiento promedio forma parte del tercio intermedio en la garantía de derechos dentro de la Zona Metropolitana del Valle de México. Esto significa que no se encuentra entre las zonas con mayores desventajas, pero tampoco entre aquellas con mejores condiciones en calidad del aire y factores que influyen en el bienestar: acceso a servicios de salud, infraestructura, situación socioeconómica y capacidad de adaptación ante el cambio climático.\n\nSin embargo, estar en el punto medio no equivale a vivir en condiciones óptimas. Incluso si consideramos solo la calidad del aire, el 99% de los días en la ciudad superan los niveles recomendados para proteger la salud.\n\nAquí la pregunta no es solo dónde estás.\nEs cuánto puede mejorar la ciudad en su conjunto.` },
-  'cumplimiento_alto': { title: 'Mejor Cumplimiento', body: `Una colonia con el mejor cumplimiento forma parte del tercio con mejores condiciones relativas en la garantía de derechos dentro de la Zona Metropolitana del Valle de México. Esto indica que presenta niveles comparativos más altos en calidad del aire y en factores que influyen en el bienestar: infraestructura, acceso a servicios de salud, condiciones socioeconómicas y resiliencia frente al cambio climático.\n\nAun así, esto no significa que las condiciones sean plenamente saludables. Ninguna colonia de la ciudad tiene un cumplimiento mayor al 80% ni está completamente libre de exposición a contaminantes: la calidad del aire supera los niveles recomendados el 99% de los días.\n\nLa diferencia no es la ausencia de riesgo, sino la desigual distribución de sus impactos.` },
+  'cumplimiento_bajo': { title: 'Equidad y Resiliencia Baja', body: `Estar en una colonia con cumplimiento bajo significa formar parte del tercio de la ciudad donde ejercer derechos —como respirar aire limpio y acceder a servicios de salud— es más difícil. Aquí la calidad del aire se cruza con otros factores: infraestructura, acceso a atención médica, condiciones socioeconómicas y capacidad para resistir eventos climáticos extremos.\n\nY algo importante: esto no quiere decir que en el resto de la ciudad todo esté bien. Si observamos únicamente el aire, el 99% de los días en la Zona Metropolitana del Valle de México superan los niveles considerados saludables por la Organización Mundial de la Salud.\n\nLa diferencia no es si hay problema o no.\nEs quién lo enfrenta con más desventaja.` },
+  'cumplimiento_medio': { title: 'Equidad y Resiliencia Promedio', body: `Una colonia con cumplimiento promedio forma parte del tercio intermedio en la garantía de derechos dentro de la Zona Metropolitana del Valle de México. Esto significa que no se encuentra entre las zonas con mayores desventajas, pero tampoco entre aquellas con mejores condiciones en calidad del aire y factores que influyen en el bienestar: acceso a servicios de salud, infraestructura, situación socioeconómica y capacidad de adaptación ante el cambio climático.\n\nSin embargo, estar en el punto medio no equivale a vivir en condiciones óptimas. Incluso si consideramos solo la calidad del aire, el 99% de los días en la ciudad superan los niveles recomendados para proteger la salud.\n\nAquí la pregunta no es solo dónde estás.\nEs cuánto puede mejorar la ciudad en su conjunto.` },
+  'cumplimiento_alto': { title: 'Mejor Equidad y Resiliencia', body: `Una colonia con el mejor cumplimiento forma parte del tercio con mejores condiciones relativas en la garantía de derechos dentro de la Zona Metropolitana del Valle de México. Esto indica que presenta niveles comparativos más altos en calidad del aire y en factores que influyen en el bienestar: infraestructura, acceso a servicios de salud, condiciones socioeconómicas y resiliencia frente al cambio climático.\n\nAun así, esto no significa que las condiciones sean plenamente saludables. Ninguna colonia de la ciudad tiene un cumplimiento mayor al 80% ni está completamente libre de exposición a contaminantes: la calidad del aire supera los niveles recomendados el 99% de los días.\n\nLa diferencia no es la ausencia de riesgo, sino la desigual distribución de sus impactos.` },
   'indice_equidad': { title: 'Índice de Equidad', body: `El Índice de Equidad evalúa qué tan cerca está tu colonia de ofrecer un entorno justo y saludable. A diferencia de las herramientas que solo miden la contaminación, integra cuatro dimensiones que influyen en la vida cotidiana y en el ejercicio de derechos: calidad del aire, salud, condiciones socioeconómicas y resiliencia frente al cambio climático.\n\nNo solo cuenta contaminantes; también analiza si el barrio tiene servicios de salud cercanos, infraestructura adecuada y capacidad para enfrentar olas de calor o inundaciones. Entre más alto el porcentaje, mejores son las condiciones para el bienestar. Un puntaje bajo no descalifica a las personas, sino las brechas estructurales que aumentan riesgos y desigualdades.\n\nCuando el aire se deteriora, los barrios más expuestos lo resienten primero. Este índice ayuda a ver qué tan protegido (o expuesto) está un territorio frente a esos riesgos.` },
   'contaminantes': { title: 'Exposición a Contaminantes', body: `La contaminación del aire es hoy el mayor riesgo ambiental para la salud. Cada año provoca más de 4.2 millones de muertes en el mundo, según estimaciones internacionales.\n\nEn el aire hay distintos contaminantes que pueden afectar nuestro cuerpo, como el ozono, el material particulado (PM), el bióxido de azufre, el óxido de nitrógeno y el monóxido de carbono. En esta plataforma nos enfocamos en dos de los más relevantes en la Ciudad de México: el ozono y el material particulado fino PM2.5.\n\nSon partículas y gases que no siempre vemos, pero que respiramos todos los días. Entender su presencia es el primer paso para comprender cómo influyen en nuestra salud y en la forma en que habitamos la ciudad.` },
   'dias_pm25': { title: 'Días al año con aire limpio (PM2.5)', body: `Este indicador muestra el porcentaje de días al año en que los niveles de PM2.5 se mantienen por debajo del límite recomendado por la OMS.` },
@@ -85,7 +85,7 @@ export default function MapExplorer() {
       }}>
         <div style={{ flex: 1, minWidth: 280 }}>
           <h1 style={{ margin: 0, fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, fontWeight: 400, color: '#fff', letterSpacing: '2px' }}>
-            Mapa de Cumplimiento Ambiental
+            Mapa de Equidad y Resiliencia
           </h1>
           <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: "'Space Mono', monospace" }}>
             CDMX y Zona Metropolitana — Aire, salud y acceso a servicios
@@ -113,17 +113,17 @@ export default function MapExplorer() {
 
       {/* Filters */}
       <div style={{ position: 'absolute', top: 80, left: 20, backgroundColor: 'white', padding: '12px 16px', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4, fontFamily: "'Space Mono', monospace", letterSpacing: '0.5px' }}>Nivel de cumplimiento</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4, fontFamily: "'Space Mono', monospace", letterSpacing: '0.5px' }}>Nivel de equidad y resiliencia</div>
         <FBtn label="Todos" n={cnt('todos')} on={filtro === 'todos'} c="#6b7280" click={() => setFiltro('todos')} />
-        <FBtn label="Mejor cumplimiento" n={cnt('alto')} on={filtro === 'alto'} c="#4ade80" click={() => setFiltro('alto')} />
+        <FBtn label="Mejor equidad" n={cnt('alto')} on={filtro === 'alto'} c="#4ade80" click={() => setFiltro('alto')} />
         <FBtn label="Promedio" n={cnt('medio')} on={filtro === 'medio'} c="#fbbf24" click={() => setFiltro('medio')} />
         <FBtn label="Bajo" n={cnt('bajo')} on={filtro === 'bajo'} c="#ef4444" click={() => setFiltro('bajo')} />
       </div>
 
       {/* Legend */}
       <div style={{ position: 'absolute', bottom: 30, left: 20, backgroundColor: 'white', padding: '12px 16px', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 10 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#374151', marginBottom: 8, fontFamily: "'Space Mono', monospace", letterSpacing: '1px' }}>NIVEL DE CUMPLIMIENTO</div>
-        {[['Mejor cumplimiento', '#4ade80'], ['Promedio', '#fbbf24'], ['Bajo', '#ef4444']].map(([l, c]) => (
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#374151', marginBottom: 8, fontFamily: "'Space Mono', monospace", letterSpacing: '1px' }}>NIVEL DE EQUIDAD Y RESILIENCIA</div>
+        {[['Mejor equidad', '#4ade80'], ['Promedio', '#fbbf24'], ['Bajo', '#ef4444']].map(([l, c]) => (
           <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: c }} />
             <span style={{ fontSize: 11, color: '#374151', fontFamily: "'Space Mono', monospace" }}>{l}</span>
@@ -140,7 +140,7 @@ export default function MapExplorer() {
       {showBird && (
         <div style={{ position: 'absolute', bottom: 140, left: 24, width: 100, height: 100, zIndex: 5, pointerEvents: 'none', opacity: 0.85 }}>
           <Suspense fallback={null}>
-            <Bird3DViewer variant={2} width="100px" height="100px" autoRotateSpeed={0} showControls={false} backgroundColor={null} cameraDistance={3.5} />
+            <FrogBirdViewer width="100px" height="100px" autoRotateSpeed={0} backgroundColor={null} cameraDistance={3.5} animation="idle" />
           </Suspense>
         </div>
       )}
@@ -159,7 +159,7 @@ export default function MapExplorer() {
             </div>
             <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ display: 'inline-block', padding: '4px 12px', borderRadius: 4, fontSize: 11, fontWeight: 700, color: 'white', backgroundColor: CUMPL_COLORS[cat] || '#6b7280', letterSpacing: '0.5px' }}>
-                {cat === 'alto' ? 'Mejor cumplimiento' : `Cumplimiento ${CUMPL_LABEL[cat]}`}
+                {cat === 'alto' ? 'Mejor equidad' : `Equidad ${CUMPL_LABEL[cat]}`}
               </span>
               <IB k={`cumplimiento_${cat}`} a={tip} t={toggle} />
               <span style={{ fontSize: 12, color: '#374151' }}>Índice: {fmt(selected.indice_resumen)}</span>

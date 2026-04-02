@@ -6,10 +6,21 @@ const HomeModel3D = lazy(() => import('../components/Bird/FrogBirdViewer'));
 export default function Home() {
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
+  const [anim, setAnim] = useState<'idle' | 'fly'>('idle');
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 80);
     return () => clearTimeout(t);
+  }, []);
+
+  // Keyboard: 1 = idle, 2 = surprise
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === '1') setAnim('idle');
+      if (e.key === '2') setAnim('fly');
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   return (
@@ -91,7 +102,7 @@ export default function Home() {
         .hp-desc {
           position: absolute; left: 8%; top: 56%;
           font-family: 'Space Mono', monospace;
-          font-size: 11.5px; font-weight: 400; color: #fff;
+          font-size: 14px; font-weight: 700; color: #fff;
           line-height: 1.9; letter-spacing: 0.8px;
           text-transform: uppercase; max-width: 310px;
           z-index: 4; opacity: 0; transform: translateY(16px);
@@ -129,8 +140,9 @@ export default function Home() {
           position: absolute; bottom: 14%; left: 50%;
           transform: translateX(-50%);
           font-family: 'Space Mono', monospace;
-          font-size: 13px; font-weight: 700; font-style: italic;
-          color: #fff; letter-spacing: 0.5px; white-space: nowrap;
+          font-size: 18px; font-weight: 700; font-style: italic;
+          color: #fff; letter-spacing: 0.5px; white-space: normal; text-align: center;
+          max-width: 520px;
           z-index: 10; opacity: 0;
           transition: opacity 0.6s ease 0.8s;
         }
@@ -139,7 +151,7 @@ export default function Home() {
         .hp-quote {
           position: absolute; right: 8%; bottom: 8%;
           font-family: 'Space Mono', monospace;
-          font-size: 11px; font-weight: 700; color: #fff;
+          font-size: 16px; font-weight: 700; color: #fff;
           letter-spacing: 1.5px; text-transform: uppercase;
           line-height: 2; text-align: right; max-width: 300px;
           z-index: 10; opacity: 0; transform: translateY(12px);
@@ -202,8 +214,7 @@ export default function Home() {
               autoRotateSpeed={0}
               backgroundColor={null}
               cameraDistance={2}
-              animation="idle"
-              
+              animation={anim}
             />
           </Suspense>
         </div>
@@ -219,7 +230,7 @@ export default function Home() {
           <button className="hp-btn" onClick={() => navigate('/quiz')}>Hacer test</button>
         </div>
 
-        <p className="hp-tagline">conoce tu nivel de exposición</p>
+        <p className="hp-tagline">conoce tu nivel de riesgo en diferentes puntos de la ciudad</p>
 
         <p className="hp-quote">
           Porque vivir bajo el mismo<br />

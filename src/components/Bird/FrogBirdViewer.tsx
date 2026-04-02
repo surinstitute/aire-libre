@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-import glbUrl from '../../assets/models/Character_ANIMTimeline_02_GLB.glb?url';
+import glbUrl from '../../assets/models/Character_ANIMTimeline_05_GLB.glb?url';
 
-// ── Animation timeline (from Seba's export) ──
+// ── Animation timeline ──
 // Single clip "Take 001" at 24 FPS
 // T Pose:   frame 0 - 10
 // Idle:     frame 10 - 130  (looped)
@@ -12,9 +12,10 @@ import glbUrl from '../../assets/models/Character_ANIMTimeline_02_GLB.glb?url';
 const FPS = 24;
 
 const ANIMS = {
-  tpose:    { name: 'tpose',    start: 0,   end: 24,  loop: false },
-  idle:     { name: 'idle',     start: 24,  end: 144, loop: true  },
-  surprise: { name: 'surprise', start: 164, end: 194, loop: true  },
+  tpose:    { name: 'tpose',    start: 0,   end: 1,  loop: false },
+  idle:     { name: 'idle',     start: 1,  end: 121, loop: true  },
+  surprise: { name: 'surprise', start: 121, end: 191, loop: true  },
+  fly:      { name: 'fly',      start: 191, end: 209, loop: true},
 } as const;
 
 type AnimationName = keyof typeof ANIMS;
@@ -39,9 +40,12 @@ export default function FrogBirdViewer({
 }: FrogBirdViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const fullClipRef = useRef<THREE.AnimationClip | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Main setup (runs once) ──
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -78,14 +82,14 @@ export default function FrogBirdViewer({
     container.appendChild(renderer.domElement);
 
     // Lights
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    scene.add(new THREE.AmbientLight(0xffffff, 2));
     const keyLight = new THREE.DirectionalLight(0xfff5e6, 1.0);
     keyLight.position.set(3, 4, 5);
     scene.add(keyLight);
-    const fillLight = new THREE.DirectionalLight(0xe6f0ff, 0.4);
+    const fillLight = new THREE.DirectionalLight(0xe6f0ff, 2.4);
     fillLight.position.set(-3, 2, -2);
     scene.add(fillLight);
-    const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.0);
     rimLight.position.set(0, -2, -4);
     scene.add(rimLight);
 
@@ -136,6 +140,10 @@ export default function FrogBirdViewer({
         if (gltf.animations.length > 0) {
           mixer = new THREE.AnimationMixer(model);
           const fullClip = gltf.animations[0];
+
+          // Store refs for reactive animation switching
+          mixerRef.current = mixer;
+          fullClipRef.current = fullClip;
 
           console.log(`[FrogBirdViewer] Full clip: "${fullClip.name}" duration: ${fullClip.duration.toFixed(2)}s, tracks: ${fullClip.tracks.length}`);
 
@@ -213,12 +221,42 @@ export default function FrogBirdViewer({
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       if (mixer) mixer.stopAllAction();
+      mixerRef.current = null;
+      fullClipRef.current = null;
       renderer.dispose();
       if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
     };
 
     return () => { if (cleanupRef.current) cleanupRef.current(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Reactive animation switching ──
+  useEffect(() => {
+    const mixer = mixerRef.current;
+    const fullClip = fullClipRef.current;
+    if (!mixer || !fullClip) return;
+
+    mixer.stopAllAction();
+
+    const animDef = ANIMS[animation];
+    const subClip = THREE.AnimationUtils.subclip(
+      fullClip,
+      animDef.name,
+      animDef.start,
+      animDef.end,
+      FPS
+    );
+
+    console.log(`[FrogBirdViewer] Switching to "${animDef.name}" (frames ${animDef.start}-${animDef.end})`);
+
+    const action = mixer.clipAction(subClip);
+    action.setLoop(
+      animDef.loop ? THREE.LoopRepeat : THREE.LoopOnce,
+      animDef.loop ? Infinity : 1
+    );
+    action.clampWhenFinished = !animDef.loop;
+    action.play();
+  }, [animation]);
 
   return (
     <div style={{ position: 'relative', width, height }}>

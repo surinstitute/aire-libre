@@ -11,7 +11,6 @@ const NAV = [
   { label: 'MAPA', route: '/map' },
   { label: 'TEST', route: '/quiz' },
   { label: 'PREGUNTAS POSIBLES', route: '/faq' },
-  { label: 'ACERCA DE AIRE LIBRE', route: '/about' },
   { label: 'RECURSOS', route: '/resources' },
 ];
 
@@ -54,9 +53,9 @@ export default function NavBar({ variant = 'transparent' }: NavBarProps) {
           border: none;
           color: #fff;
           font-family: 'Space Mono', monospace;
-          font-size: 11px;
+          font-size: 13px;
           font-weight: 700;
-          letter-spacing: 1.4px;
+          letter-spacing: 1.6px;
           text-transform: uppercase;
           cursor: pointer;
           padding: 4px 0;
@@ -82,13 +81,13 @@ export default function NavBar({ variant = 'transparent' }: NavBarProps) {
           align-items: center;
           gap: 16px;
         }
-        .nb-logo-sur { height: 44px; }
+        .nb-logo-sur { height: 62px; }
         .nb-logo-divider {
           width: 1px;
           height: 32px;
           background: rgba(255,255,255,0.35);
         }
-        .nb-logo-bc { height: 32px; opacity: 0.92; }
+        .nb-logo-bc { height: 38px; opacity: 0.92; }
 
         @media (max-width: 900px) {
           .nb { padding: 12px 20px; }

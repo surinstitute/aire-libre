@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Colonia } from '../../types';
+import cdmxPerimetro from '../../data/cdmx_perimetro.json';
 
 interface MapViewProps {
   colonias: Colonia[];
@@ -56,6 +57,24 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
     map.current.on('load', () => {
       setIsLoaded(true);
       map.current!.addSource('polygons', { type: 'vector', url: `mapbox://${TILESET_ID}`, promoteId: 'codigo_postal' });
+
+      // CDMX perimeter silhouette
+      map.current!.addSource('cdmx-perimetro', {
+        type: 'geojson',
+        data: cdmxPerimetro as GeoJSON.FeatureCollection,
+      });
+      map.current!.addLayer({
+        id: 'cdmx-perimetro-line',
+        type: 'line',
+        source: 'cdmx-perimetro',
+        paint: {
+          'line-color': '#1C2333',
+          'line-width': 2.5,
+          'line-opacity': 0.6,
+          'line-dasharray': [4, 2],
+        },
+      });
+
       setMapReady(true);
     });
 
@@ -141,7 +160,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
 
       const cat = colonia?.categoria_riesgo || 'medio';
       const color = BADGE_COLORS[cat] || '#6b7280';
-      const cumplLabel = cat === 'alto' ? 'Mejor cumplimiento' : cat === 'medio' ? 'Cumplimiento PROMEDIO' : 'Cumplimiento BAJO';
+      const cumplLabel = cat === 'alto' ? 'Mejor cumplimiento' : cat === 'medio' ? 'Equidad PROMEDIO' : 'Equidad BAJA';
 
       // Close previous popup
       if (activePopup) { activePopup.remove(); activePopup = null; }
