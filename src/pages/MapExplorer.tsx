@@ -152,7 +152,12 @@ export default function MapExplorer() {
           width: 300px; height: 180px; z-index: 5; pointer-events: none;
         }
 
-        /* ── Filters toggle FAB — mobile only ── */
+        .me-map-container {
+          width: 100%; height: 100%; padding-top: 66px;
+        }
+        @media (max-width: 768px) {
+          .me-map-container { padding-top: 110px; }
+        }
         .me-filters-fab {
           display: none;
         }
@@ -163,9 +168,9 @@ export default function MapExplorer() {
             flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 16px;
           }
           .me-header-title h1 { font-size: 18px; }
-          .me-header-title p { font-size: 10px; }
-          .me-header-actions { width: 100%; }
-          .me-search-input { flex: 1; width: auto; font-size: 12px; }
+          .me-header-title p { font-size: 10px; display: block; }
+          .me-header-actions { width: 100%; flex-wrap: wrap; }
+          .me-search-input { flex: 1; min-width: 0; width: auto; font-size: 12px; }
 
           /* Hide bird on mobile */
           .me-bird { display: none; }
@@ -268,7 +273,7 @@ export default function MapExplorer() {
       </div>
 
       {/* Map */}
-      <div style={{ width: '100%', height: '100%', paddingTop: 66 }}>
+      <div className="me-map-container">
         <MapView colonias={coloniasFiltradas} onColoniaClick={setSelected} selectedCP={selected?.codigo_postal} />
       </div>
 

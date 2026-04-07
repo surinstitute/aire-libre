@@ -6,9 +6,13 @@ export default function AppLayout() {
   const location = useLocation();
   const isMap = location.pathname === '/map';
   const isQuizResult = location.pathname === '/quiz/resultado';
+  const isQuiz = location.pathname === '/quiz';
 
   // Map has its own integrated header; quiz results are full-screen slides
   if (isMap || isQuizResult) return <Outlet />;
+
+  // Quiz has its own fixed footer (Atrás/Siguiente), don't show the general Footer
+  const showFooter = !isQuiz;
 
   return (
     <>
@@ -44,7 +48,7 @@ export default function AppLayout() {
       <div className="app-content">
         <Outlet />
       </div>
-      <Footer />
+      {showFooter && <Footer />}
     </>
   );
 }

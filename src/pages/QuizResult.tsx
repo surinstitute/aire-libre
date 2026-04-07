@@ -351,7 +351,7 @@ const s = (p: Palette) => ({
   slide: {
     minHeight: '100vh', width: '100%', backgroundColor: p.bg, color: p.text,
     display: 'flex' as const, flexDirection: 'column' as const, alignItems: 'center' as const, justifyContent: 'center' as const,
-    padding: '60px 72px', position: 'relative' as const, fontFamily: "'Space Mono', monospace", overflow: 'hidden', transition: 'background-color 0.6s ease',
+    padding: '60px 72px 80px', position: 'relative' as const, fontFamily: "'Space Mono', monospace", overflow: 'hidden', transition: 'background-color 0.6s ease',
   },
   topLabel: {
     position: 'absolute' as const, top: '24px', left: '32px',
@@ -692,8 +692,8 @@ const QuizResult: React.FC = () => {
         {slide.content}
       </div>
 
-      {/* Share button centered on every slide */}
-      <div className="qr-share-wrap" style={{ position: 'absolute', bottom: '52px', left: '50%', transform: 'translateX(-50%)', zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+      {/* Share button — part of flow, below content */}
+      <div className="qr-share-wrap" style={{ marginTop: '16px', zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
         {shareStatus && <span style={{ fontSize: '10px', color: palette.accent, opacity: 0.8 }}>{shareStatus}</span>}
         <button style={st.shareSmall} onClick={handleShareSlide}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
