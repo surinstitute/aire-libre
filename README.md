@@ -243,8 +243,8 @@ El proyecto usa modelos GLB con rig y animaciones (skinned mesh) cargados con Th
 | Paloma | `Pigeon_Animations_01_glb.glb` | QuizResult (Paloma Común) | ✅ Implementado |
 | Gorrión | `Gorrion_ANIMS_glb.glb` | QuizResult (Gorrión Cantor) | ✅ Implementado |
 | Canario | `Canario_ANIMS_glb.glb` | QuizResult (Canario en Alerta) | ✅ Implementado |
-| Tortolita | — | QuizResult (Tortolita Luchona) | ⏳ Pendiente |
-| Jilguero | — | QuizResult (Jilguero Cansado) | ⏳ Pendiente |
+| Tortolita | `Tortolit_ANIMS_glb.glb` | QuizResult (Tortolita Luchona) | ✅ Implementado |
+| Jilguero | `Jilguero_ANIMS_glb.glb` | QuizResult (Jilguero Cansado) | ✅ Implementado |
 
 ### Agregar un nuevo modelo
 
