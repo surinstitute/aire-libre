@@ -308,7 +308,7 @@ En Vercel → Settings → Environment Variables, agregar:
 |-----|---------|----------|
 | **Desarrollo frontend** | Andy | [@Lounge-Lizard](https://github.com/Lounge-Lizard) |
 | **Contenido y copy** | Tamara | Instituto del Sur Urbano |
-| **Modelado 3D** | Seba & Lopo | — |
+| **Modelado 3D** | Sebas | — |
 | **Cliente** | Instituto del Sur Urbano | [sur.institute](https://sur.institute) |
 | **Aliado** | Breathe Cities | [breathecities.org](https://breathecities.org) |
 
