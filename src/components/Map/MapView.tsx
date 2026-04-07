@@ -160,7 +160,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
 
       const cat = colonia?.categoria_riesgo || 'medio';
       const color = BADGE_COLORS[cat] || '#6b7280';
-      const cumplLabel = cat === 'alto' ? 'Mejor cumplimiento' : cat === 'medio' ? 'Equidad PROMEDIO' : 'Equidad BAJA';
+      const cumplLabel = cat === 'alto' ? 'Mejor equidad' : cat === 'medio' ? 'Equidad PROMEDIO' : 'Equidad BAJA';
 
       // Close previous popup
       if (activePopup) { activePopup.remove(); activePopup = null; }

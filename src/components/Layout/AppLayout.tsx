@@ -12,14 +12,36 @@ export default function AppLayout() {
 
   return (
     <>
-      <div style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0,
-        zIndex: 1000,
-      }}>
+      <style>{`
+        :root {
+          --header-height: 80px;
+        }
+        @media (max-width: 900px) {
+          :root {
+            --header-height: 62px;
+          }
+        }
+        @media (max-width: 600px) {
+          :root {
+            --header-height: 56px;
+          }
+        }
+        .app-header {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 1000;
+        }
+        .app-content {
+          padding-top: var(--header-height);
+          min-height: calc(100vh - var(--header-height));
+        }
+      `}</style>
+      <div className="app-header">
         <NavBar variant="transparent" />
       </div>
-      <div style={{ paddingTop: 64 }}>
+      <div className="app-content">
         <Outlet />
       </div>
       <Footer />

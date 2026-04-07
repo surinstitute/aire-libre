@@ -49,11 +49,21 @@ export default function MapExplorer() {
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [tip, setTip] = useState<string | null>(null);
   const [showBird, setShowBird] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => { coloniaService.getAllColonias().then(d => { setAllColonias(d); setColoniasFiltradas(d); setLoading(false); }).catch(() => setLoading(false)); }, []);
   useEffect(() => { const cp = searchParams.get('cp'); if (cp && allColonias.length) coloniaService.getColoniaByCP(cp).then(c => { if (c) { setSelected(c); setSearchCP(cp); } }); }, [allColonias, searchParams]);
   useEffect(() => { setColoniasFiltradas(filtro === 'todos' ? allColonias : allColonias.filter(c => c.categoria_riesgo === filtro)); }, [filtro, allColonias]);
-  useEffect(() => { if (!loading) { const t = setTimeout(() => setShowBird(true), 3000); return () => clearTimeout(t); } }, [loading]);
+  useEffect(() => { if (!loading && !isMobile) { const t = setTimeout(() => setShowBird(true), 3000); return () => clearTimeout(t); } }, [loading, isMobile]);
 
   const search = async () => { if (!searchCP.trim()) return; const c = await coloniaService.getColoniaByCP(searchCP.trim()); if (c) { setFiltro('todos'); setSelected(c); } else alert('Código postal no encontrado'); };
   const fmt = (v: number | null | undefined) => v == null || isNaN(v) ? 'N/D' : `${(v * 100).toFixed(1)}%`;
@@ -71,57 +81,183 @@ export default function MapExplorer() {
   const cat = selected?.categoria_riesgo || 'medio';
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');`}</style>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
 
-      {/* Header — matching Home identity */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0,
-        background: 'linear-gradient(90deg, #6AADDA 0%, #7CB9E2 100%)',
-        padding: '12px 24px',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-        zIndex: 10,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
-      }}>
-        <div style={{ flex: 1, minWidth: 280 }}>
-          <h1 style={{ margin: 0, fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, fontWeight: 400, color: '#fff', letterSpacing: '2px' }}>
-            Mapa de Equidad y Resiliencia
-          </h1>
-          <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: "'Space Mono', monospace" }}>
-            CDMX y Zona Metropolitana — Aire, salud y acceso a servicios
-          </p>
+        .me-header {
+          position: absolute; top: 0; left: 0; right: 0;
+          background: linear-gradient(90deg, #6AADDA 0%, #7CB9E2 100%);
+          padding: 12px 24px;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+          z-index: 10;
+          display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+        }
+        .me-header-title { flex: 1; min-width: 200px; }
+        .me-header-title h1 {
+          margin: 0; font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+          font-weight: 400; color: #fff; letter-spacing: 2px;
+        }
+        .me-header-title p {
+          margin: 2px 0 0; font-size: 11px; color: rgba(255,255,255,0.7);
+          font-family: 'Space Mono', monospace;
+        }
+        .me-header-actions {
+          display: flex; gap: 8px; align-items: center;
+        }
+        .me-search-input {
+          padding: 8px 12px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.3);
+          font-size: 13px; width: 120px; font-family: 'Space Mono', monospace;
+          background: rgba(255,255,255,0.15); color: #fff; backdrop-filter: blur(8px);
+          outline: none;
+        }
+        .me-search-input::placeholder { color: rgba(255,255,255,0.5); }
+        .me-header-btn {
+          background-color: rgba(28,35,51,0.65); color: #fff; padding: 8px 16px; border-radius: 8px;
+          border: 1.5px solid rgba(255,255,255,0.35); cursor: pointer; font-weight: 700;
+          font-size: 12px; font-family: 'Space Mono', monospace; backdrop-filter: blur(8px);
+        }
+        .me-header-btn--light {
+          background-color: rgba(255,255,255,0.12);
+          border: 1.5px solid rgba(255,255,255,0.25);
+        }
+
+        /* ── Filters panel — desktop ── */
+        .me-filters {
+          position: absolute; top: 80px; left: 20px;
+          background-color: white; padding: 12px 16px; border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10;
+          display: flex; flex-direction: column; gap: 8px;
+        }
+
+        /* ── Legend — desktop ── */
+        .me-legend {
+          position: absolute; bottom: 30px; left: 20px;
+          background-color: white; padding: 12px 16px; border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10;
+        }
+
+        /* ── Info panel — desktop ── */
+        .me-info {
+          position: absolute; top: 80px; right: 20px; width: 400px;
+          max-height: calc(100vh - 110px); overflow-y: auto;
+          background-color: white; border-radius: 12px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 10;
+          font-size: 13px; color: #1f2937; font-family: 'Space Mono', monospace;
+        }
+
+        /* ── Bird — desktop only ── */
+        .me-bird {
+          position: absolute; bottom: 120px; left: -25px;
+          width: 300px; height: 180px; z-index: 5; pointer-events: none;
+        }
+
+        /* ── Filters toggle FAB — mobile only ── */
+        .me-filters-fab {
+          display: none;
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 768px) {
+          .me-header {
+            flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 16px;
+          }
+          .me-header-title h1 { font-size: 18px; }
+          .me-header-title p { font-size: 10px; }
+          .me-header-actions { width: 100%; }
+          .me-search-input { flex: 1; width: auto; font-size: 12px; }
+
+          /* Hide bird on mobile */
+          .me-bird { display: none; }
+
+          /* Filters: hidden by default, toggle via FAB */
+          .me-filters {
+            position: fixed; bottom: 80px; left: 12px; right: 12px;
+            top: auto;
+            border-radius: 12px;
+            display: none;
+            flex-direction: row; flex-wrap: wrap; gap: 6px;
+            padding: 12px;
+          }
+          .me-filters--open { display: flex; }
+          .me-filters .me-filters-label { width: 100%; margin-bottom: 2px; }
+
+          /* FAB for filters */
+          .me-filters-fab {
+            display: flex;
+            position: absolute; bottom: 24px; left: 12px;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: white; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10;
+            font-size: 18px;
+          }
+
+          /* Legend: compact bottom */
+          .me-legend {
+            bottom: 24px; left: auto; right: 12px;
+            padding: 8px 12px;
+            font-size: 9px;
+          }
+          .me-legend span { font-size: 9px !important; }
+
+          /* Info panel: bottom sheet */
+          .me-info {
+            position: fixed;
+            top: auto; right: 0; left: 0; bottom: 0;
+            width: 100%; max-height: 55vh;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+          }
+          .me-info-drag {
+            display: flex;
+            justify-content: center;
+            padding: 8px 0 4px;
+          }
+          .me-info-drag-bar {
+            width: 40px; height: 4px; border-radius: 2px;
+            background: #d1d5db;
+          }
+        }
+      `}</style>
+
+      {/* Header */}
+      <div className="me-header">
+        <div className="me-header-title">
+          <h1>Mapa de Equidad y Resiliencia</h1>
+          <p>CDMX y Zona Metropolitana — Aire, salud y acceso a servicios</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input type="text" placeholder="Buscar CP..." value={searchCP} onChange={e => setSearchCP(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} style={{
-            padding: '8px 12px', borderRadius: 8, border: '1.5px solid rgba(255,255,255,0.3)',
-            fontSize: 13, width: 120, fontFamily: "'Space Mono', monospace",
-            background: 'rgba(255,255,255,0.15)', color: '#fff', backdropFilter: 'blur(8px)',
-            outline: 'none',
-          }} />
-          <button onClick={search} style={{
-            backgroundColor: 'rgba(28,35,51,0.65)', color: '#fff', padding: '8px 16px', borderRadius: 8,
-            border: '1.5px solid rgba(255,255,255,0.35)', cursor: 'pointer', fontWeight: 700,
-            fontSize: 12, fontFamily: "'Space Mono', monospace", backdropFilter: 'blur(8px)',
-          }}>Buscar</button>
+        <div className="me-header-actions">
+          <input
+            type="text" placeholder="Buscar CP..." value={searchCP}
+            onChange={e => setSearchCP(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && search()}
+            className="me-search-input"
+          />
+          <button onClick={search} className="me-header-btn">Buscar</button>
+          <button onClick={() => navigate('/')} className="me-header-btn me-header-btn--light">Inicio</button>
         </div>
-        <button onClick={() => navigate('/')} style={{
-          backgroundColor: 'rgba(255,255,255,0.12)', color: '#fff', padding: '8px 16px', borderRadius: 8,
-          border: '1.5px solid rgba(255,255,255,0.25)', cursor: 'pointer', fontWeight: 700,
-          fontSize: 12, fontFamily: "'Space Mono', monospace", backdropFilter: 'blur(8px)',
-        }}>Inicio</button>
       </div>
 
+      {/* Filters FAB — mobile only */}
+      <button className="me-filters-fab" onClick={() => setFiltersOpen(!filtersOpen)}>
+        {filtersOpen ? '✕' : '☰'}
+      </button>
+
       {/* Filters */}
-      <div style={{ position: 'absolute', top: 80, left: 20, backgroundColor: 'white', padding: '12px 16px', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4, fontFamily: "'Space Mono', monospace", letterSpacing: '0.5px' }}>Nivel de equidad y resiliencia</div>
-        <FBtn label="Todos" n={cnt('todos')} on={filtro === 'todos'} c="#6b7280" click={() => setFiltro('todos')} />
-        <FBtn label="Mejor equidad" n={cnt('alto')} on={filtro === 'alto'} c="#4ade80" click={() => setFiltro('alto')} />
-        <FBtn label="Promedio" n={cnt('medio')} on={filtro === 'medio'} c="#fbbf24" click={() => setFiltro('medio')} />
-        <FBtn label="Bajo" n={cnt('bajo')} on={filtro === 'bajo'} c="#ef4444" click={() => setFiltro('bajo')} />
+      <div className={`me-filters ${filtersOpen || !isMobile ? '' : ''} ${isMobile && filtersOpen ? 'me-filters--open' : ''}`}
+        style={!isMobile ? {} : (filtersOpen ? {} : { display: 'none' })}>
+        <div className="me-filters-label" style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4, fontFamily: "'Space Mono', monospace", letterSpacing: '0.5px' }}>
+          Nivel de equidad y resiliencia
+        </div>
+        <FBtn label="Todos" n={cnt('todos')} on={filtro === 'todos'} c="#6b7280" click={() => { setFiltro('todos'); if (isMobile) setFiltersOpen(false); }} />
+        <FBtn label="Mejor equidad" n={cnt('alto')} on={filtro === 'alto'} c="#4ade80" click={() => { setFiltro('alto'); if (isMobile) setFiltersOpen(false); }} />
+        <FBtn label="Promedio" n={cnt('medio')} on={filtro === 'medio'} c="#fbbf24" click={() => { setFiltro('medio'); if (isMobile) setFiltersOpen(false); }} />
+        <FBtn label="Bajo" n={cnt('bajo')} on={filtro === 'bajo'} c="#ef4444" click={() => { setFiltro('bajo'); if (isMobile) setFiltersOpen(false); }} />
       </div>
 
       {/* Legend */}
-      <div style={{ position: 'absolute', bottom: 30, left: 20, backgroundColor: 'white', padding: '12px 16px', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 10 }}>
+      <div className="me-legend">
         <div style={{ fontSize: 10, fontWeight: 700, color: '#374151', marginBottom: 8, fontFamily: "'Space Mono', monospace", letterSpacing: '1px' }}>NIVEL DE EQUIDAD Y RESILIENCIA</div>
         {[['Mejor equidad', '#4ade80'], ['Promedio', '#fbbf24'], ['Bajo', '#ef4444']].map(([l, c]) => (
           <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -136,9 +272,9 @@ export default function MapExplorer() {
         <MapView colonias={coloniasFiltradas} onColoniaClick={setSelected} selectedCP={selected?.codigo_postal} />
       </div>
 
-      {/* Bird — delayed */}
+      {/* Bird — desktop only (hidden on mobile via CSS) */}
       {showBird && (
-        <div style={{ position: 'absolute', bottom: 120, left: -25, width: 300, height: 180, zIndex: 5, pointerEvents: 'none', opacity: 100 }}>
+        <div className="me-bird">
           <Suspense fallback={null}>
             <FrogBirdViewer width="300px" height="180px" autoRotateSpeed={0} backgroundColor={null} cameraDistance={2.8} animation="fly" />
           </Suspense>
@@ -147,15 +283,20 @@ export default function MapExplorer() {
 
       {/* Info Panel */}
       {selected && (
-        <div style={{ position: 'absolute', top: 80, right: 20, width: 400, maxHeight: 'calc(100vh - 110px)', overflowY: 'auto', backgroundColor: 'white', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.2)', zIndex: 10, fontSize: 13, color: '#1f2937', fontFamily: "'Space Mono', monospace" }}>
+        <div className="me-info">
+          {/* Drag handle — mobile only */}
+          <div className="me-info-drag" style={isMobile ? {} : { display: 'none' }}>
+            <div className="me-info-drag-bar" />
+          </div>
+
           <div style={{ padding: 20, borderBottom: '2px solid #e5e7eb', position: 'sticky', top: 0, backgroundColor: 'white', borderRadius: '12px 12px 0 0', zIndex: 2 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <h2 style={{ margin: '0 0 2px', fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, fontWeight: 400, letterSpacing: '1px', color: '#1f2937' }}>CP {selected.codigo_postal}</h2>
-                {selected.colonias && <p style={{ margin: '0 0 2px', fontSize: 12, color: '#374151' }}>{selected.colonias}</p>}
+                {selected.colonias && <p style={{ margin: '0 0 2px', fontSize: 12, color: '#374151', wordBreak: 'break-word' }}>{selected.colonias}</p>}
                 <p style={{ margin: 0, fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{selected.municipio}, {selected.estado}</p>
               </div>
-              <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#9ca3af', padding: 0, lineHeight: 1 }}>×</button>
+              <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#9ca3af', padding: '0 0 0 12px', lineHeight: 1, flexShrink: 0 }}>×</button>
             </div>
             <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ display: 'inline-block', padding: '4px 12px', borderRadius: 4, fontSize: 11, fontWeight: 700, color: 'white', backgroundColor: CUMPL_COLORS[cat] || '#6b7280', letterSpacing: '0.5px' }}>
@@ -224,7 +365,7 @@ function Sec({ title, ik, a, t }: { title: string; ik: string; a: string | null;
 function Row({ l, v, ik, a, t }: { l: string; v: string; ik?: string; a?: string | null; t?: (k: string) => void }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '7px 0', borderBottom: '1px solid #e5e7eb' }}>
-      <div style={{ flex: 1, paddingRight: 12 }}>
+      <div style={{ flex: 1, paddingRight: 12, minWidth: 0 }}>
         <span style={{ fontSize: 12, color: '#374151', display: 'block', fontFamily: "'Space Mono', monospace" }}>{l}</span>
         {ik && t && <div style={{ marginTop: 4 }}><IB k={ik} a={a!} t={t} /></div>}
       </div>

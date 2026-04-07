@@ -42,6 +42,7 @@ export default function Home() {
           overflow: hidden;
         }
 
+        /* ── Desktop: absolute positioning (unchanged) ── */
         .hp-hero {
           position: relative;
           width: 100%;
@@ -165,35 +166,109 @@ export default function Home() {
           .hp-desc { left: 6%; }
         }
 
+        /* ── Mobile: flex column layout ── */
         @media (max-width: 768px) {
+          .hp-hero {
+            height: auto;
+            min-height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 24px 20px 40px;
+          }
+
+          /* Titles — side by side at top */
+          .hp-titles-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 0;
+            position: relative;
+            z-index: 3;
+          }
+
+          .hp-title {
+            position: relative;
+            top: auto; left: auto; right: auto; bottom: auto;
+          }
+
           .hp-title--aire {
-            right: auto; left: 6%; top: 14%;
-            font-size: clamp(72px, 20vw, 120px) !important;
+            font-size: clamp(64px, 18vw, 100px) !important;
+            right: auto;
+            top: auto;
           }
           .hp-title--libre {
-            left: auto; right: 6%; top: 22%;
-            font-size: clamp(60px, 17vw, 110px) !important;
+            font-size: clamp(52px, 15vw, 88px) !important;
+            left: auto;
+            top: auto;
           }
+
+          /* Model — centered, no overlap */
           .hp-model {
-            width: clamp(220px, 60vw, 340px);
-            height: clamp(200px, 55vw, 300px);
-            top: 44%;
+            position: relative;
+            left: auto; top: auto;
+            transform: none;
+            width: clamp(220px, 55vw, 300px);
+            height: clamp(200px, 50vw, 280px);
+            margin: -8px auto 0;
+            z-index: 8;
           }
-          .hp-desc { left: 6%; top: 54%; font-size: 10px; max-width: 220px; }
-          .hp-ctas { top: auto; bottom: 24%; }
-          .hp-tagline { bottom: 16%; font-size: 11px; }
+
+          /* Description — flows below model */
+          .hp-desc {
+            position: relative;
+            left: auto; top: auto;
+            text-align: center;
+            max-width: 320px;
+            font-size: 11px;
+            line-height: 1.7;
+            margin: 0 auto 20px;
+            transform: none;
+          }
+          .hp--in .hp-desc { transform: none; }
+
+          /* CTAs — below description */
+          .hp-ctas {
+            position: relative;
+            left: auto; top: auto;
+            transform: none;
+            margin: 0 auto 20px;
+          }
+          .hp--in .hp-ctas { transform: none; }
+
+          /* Tagline */
+          .hp-tagline {
+            position: relative;
+            left: auto; bottom: auto;
+            transform: none;
+            font-size: 13px;
+            max-width: 340px;
+            margin: 0 auto 16px;
+          }
+
+          /* Quote */
           .hp-quote {
-            right: auto; left: 50%; bottom: 4%;
-            transform: translateX(-50%);
-            text-align: center; font-size: 9px;
+            position: relative;
+            right: auto; bottom: auto;
+            transform: none;
+            text-align: center;
+            font-size: 10px;
+            line-height: 1.8;
+            max-width: 300px;
+            margin: 0 auto;
           }
-          .hp--in .hp-quote { transform: translateX(-50%); }
+          .hp--in .hp-quote { transform: none; }
         }
       `}</style>
 
       <div className="hp-hero">
-        <h1 className="hp-title hp-title--aire">AIRE</h1>
-        <h1 className="hp-title hp-title--libre">LIBRE</h1>
+        {/* Mobile: titles in a row wrapper; Desktop: absolute positioned */}
+        <div className="hp-titles-row">
+          <h1 className="hp-title hp-title--aire">AIRE</h1>
+          <h1 className="hp-title hp-title--libre">LIBRE</h1>
+        </div>
 
         <div className="hp-model">
           <Suspense fallback={

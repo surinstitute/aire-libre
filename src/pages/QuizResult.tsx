@@ -351,7 +351,7 @@ const s = (p: Palette) => ({
   slide: {
     minHeight: '100vh', width: '100%', backgroundColor: p.bg, color: p.text,
     display: 'flex' as const, flexDirection: 'column' as const, alignItems: 'center' as const, justifyContent: 'center' as const,
-    padding: '60px 24px', position: 'relative' as const, fontFamily: "'Space Mono', monospace", overflow: 'hidden', transition: 'background-color 0.6s ease',
+    padding: '60px 72px', position: 'relative' as const, fontFamily: "'Space Mono', monospace", overflow: 'hidden', transition: 'background-color 0.6s ease',
   },
   topLabel: {
     position: 'absolute' as const, top: '24px', left: '32px',
@@ -664,7 +664,15 @@ const QuizResult: React.FC = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [currentSlide, goTo, total]);
 
-  const fontLink = <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');`}</style>;
+  const fontLink = <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+    @media (max-width: 768px) {
+      .qr-arrow { width: 36px !important; height: 36px !important; font-size: 16px !important; }
+      .qr-arrow--left { left: 8px !important; }
+      .qr-arrow--right { right: 8px !important; }
+      .qr-share-wrap { bottom: 44px !important; }
+    }
+  `}</style>;
 
   const [touchX, setTouchX] = useState<number | null>(null);
   const slide = slides[currentSlide];
@@ -685,7 +693,7 @@ const QuizResult: React.FC = () => {
       </div>
 
       {/* Share button centered on every slide */}
-      <div style={{ position: 'absolute', bottom: '52px', left: '50%', transform: 'translateX(-50%)', zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+      <div className="qr-share-wrap" style={{ position: 'absolute', bottom: '52px', left: '50%', transform: 'translateX(-50%)', zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
         {shareStatus && <span style={{ fontSize: '10px', color: palette.accent, opacity: 0.8 }}>{shareStatus}</span>}
         <button style={st.shareSmall} onClick={handleShareSlide}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
@@ -695,12 +703,12 @@ const QuizResult: React.FC = () => {
       </div>
 
       {currentSlide > 0 && (
-        <button style={{ ...st.arrow, left: '16px' }} onClick={() => goTo(currentSlide - 1)}
+        <button className="qr-arrow qr-arrow--left" style={{ ...st.arrow, left: '16px' }} onClick={() => goTo(currentSlide - 1)}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}>‹</button>
       )}
       {currentSlide < total - 1 && (
-        <button style={{ ...st.arrow, right: '16px' }} onClick={() => goTo(currentSlide + 1)}
+        <button className="qr-arrow qr-arrow--right" style={{ ...st.arrow, right: '16px' }} onClick={() => goTo(currentSlide + 1)}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}>›</button>
       )}
