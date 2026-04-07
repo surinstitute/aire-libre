@@ -89,7 +89,7 @@ export default function Home() {
 
         .hp-model {
           position: absolute;
-          left: 50%; top: 46%;
+          left: 45%; top: 46%;
           transform: translate(-50%, -50%);
           width: clamp(300px, 38vw, 500px);
           height: clamp(280px, 36vw, 460px);

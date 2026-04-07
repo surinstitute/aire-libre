@@ -10,12 +10,10 @@
 // ── GLB imports (Vite ?url) ──
 // Only import models that exist. Comment out the rest until delivered.
 
-// import gorrionGlb from '../assets/models/Gorrion_Animations.glb?url';
 import gorrionGlb from '../assets/models/Gorrion_ANIMS_glb.glb?url';
-// import tortolitaGlb from '../assets/models/Tortolita_Animations.glb?url';
+import tortolitaGlb from '../assets/models/Tortolit_ANIMS_glb.glb?url';
 import palomaGlb from '../assets/models/Pigeon_Animations_01_glb.glb?url';
-// import jilgueroGlb from '../assets/models/Jilguero_Animations.glb?url';
-// import canarioGlb from '../assets/models/Canario_Animations.glb?url';
+import jilgueroGlb from '../assets/models/Jilguero_ANIMS_glb.glb?url';
 import canarioGlb from '../assets/models/Canario_ANIMS_glb.glb?url';
 
 export interface BirdModelConfig {
@@ -39,33 +37,41 @@ export const BIRD_MODELS: Record<string, BirdModelConfig> = {
   gorrion: {
     glbUrl: gorrionGlb, // TODO: waiting for Sebas
     animationIndex: 0,
-    cameraDistance: 3.5,
+    cameraDistance: 2.0,
     autoRotateSpeed: 0,
+    startFrame: 1,
+    endFrame: 241,
   },
   tortolita: {
-    glbUrl: null, // TODO: waiting for Sebas
+    glbUrl: tortolitaGlb, // TODO: waiting for Sebas
     animationIndex: 0,
-    cameraDistance: 3.5,
+    cameraDistance: 2.0,
     autoRotateSpeed: 0,
+    startFrame: 1,
+    endFrame: 241,
   },
   paloma: {
     glbUrl: palomaGlb,
     animationIndex: 0,
-    cameraDistance: 3.5,
+    cameraDistance: 2.0,
     autoRotateSpeed: 0,
     startFrame: 1,
-    endFrame: 240,
+    endFrame: 241,
   },
   jilguero: {
-    glbUrl: null, // TODO: waiting for Sebas
+    glbUrl: jilgueroGlb, // 
     animationIndex: 0,
-    cameraDistance: 3.5,
+    cameraDistance: 2.0,
     autoRotateSpeed: 0,
+    startFrame: 1,
+    endFrame: 241,
   },
   canario: {
-    glbUrl: canarioGlb, // TODO: waiting for Sebas
+    glbUrl: canarioGlb, // 
     animationIndex: 0,
-    cameraDistance: 3.5,
+    cameraDistance: 2.0,
     autoRotateSpeed: 0,
+    startFrame: 1,
+    endFrame: 241,
   },
 };

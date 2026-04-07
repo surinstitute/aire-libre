@@ -138,9 +138,9 @@ export default function MapExplorer() {
 
       {/* Bird — delayed */}
       {showBird && (
-        <div style={{ position: 'absolute', bottom: 140, left: 24, width: 100, height: 100, zIndex: 5, pointerEvents: 'none', opacity: 0.85 }}>
+        <div style={{ position: 'absolute', bottom: 120, left: -25, width: 300, height: 180, zIndex: 5, pointerEvents: 'none', opacity: 100 }}>
           <Suspense fallback={null}>
-            <FrogBirdViewer width="100px" height="100px" autoRotateSpeed={0} backgroundColor={null} cameraDistance={3.5} animation="idle" />
+            <FrogBirdViewer width="300px" height="180px" autoRotateSpeed={0} backgroundColor={null} cameraDistance={2.8} animation="fly" />
           </Suspense>
         </div>
       )}

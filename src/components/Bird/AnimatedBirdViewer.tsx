@@ -48,7 +48,7 @@ export default function AnimatedBirdViewer({
     let pivot: THREE.Group | null = null;
     let isDragging = false;
     let prevMouse = { x: 0, y: 0 };
-    const orbitAngle = { x: 0.1, y: -0.3 };
+    const orbitAngle = { x: 0.1, y: 0.3 };
     let prevTime = performance.now();
     let firstRenderDone = false;
 

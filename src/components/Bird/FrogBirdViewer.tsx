@@ -57,7 +57,7 @@ export default function FrogBirdViewer({
     let pivot: THREE.Group | null = null;
     let isDragging = false;
     let prevMouse = { x: 0, y: 0 };
-    const orbitAngle = { x: 0, y: 0 };
+    const orbitAngle = { x: 0.1, y: 0.6 };
     let prevTime = performance.now();
 
     // Scene
