@@ -55,8 +55,6 @@ export default function FrogBirdViewer({
     let animId = 0;
     let mixer: THREE.AnimationMixer | null = null;
     let pivot: THREE.Group | null = null;
-    let isDragging = false;
-    let prevMouse = { x: 0, y: 0 };
     const orbitAngle = { x: 0.1, y: 0.6 };
     let prevTime = performance.now();
 
@@ -103,7 +101,7 @@ export default function FrogBirdViewer({
       if (mixer) mixer.update(delta);
 
       if (pivot) {
-        if (!isDragging && autoRotateSpeed > 0) {
+        if (autoRotateSpeed > 0) {
           orbitAngle.y += autoRotateSpeed * delta;
         }
         pivot.rotation.x = orbitAngle.x;
@@ -196,30 +194,9 @@ export default function FrogBirdViewer({
     };
     window.addEventListener('resize', handleResize);
 
-    // Mouse controls
-    const onPointerDown = (e: PointerEvent) => {
-      isDragging = true;
-      prevMouse = { x: e.clientX, y: e.clientY };
-    };
-    const onPointerMove = (e: PointerEvent) => {
-      if (!isDragging) return;
-      orbitAngle.y += (e.clientX - prevMouse.x) * 0.008;
-      orbitAngle.x += (e.clientY - prevMouse.y) * 0.008;
-      orbitAngle.x = Math.max(-1.2, Math.min(1.2, orbitAngle.x));
-      prevMouse = { x: e.clientX, y: e.clientY };
-    };
-    const onPointerUp = () => { isDragging = false; };
-
-    renderer.domElement.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-
     cleanupRef.current = () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
-      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
       if (mixer) mixer.stopAllAction();
       mixerRef.current = null;
       fullClipRef.current = null;
@@ -260,7 +237,7 @@ export default function FrogBirdViewer({
 
   return (
     <div style={{ position: 'relative', width, height }}>
-      <div ref={containerRef} style={{ width: '100%', height: '100%', cursor: 'grab', borderRadius: '12px', overflow: 'hidden' }} />
+      <div ref={containerRef} style={{ width: '100%', height: '100%', borderRadius: '12px', overflow: 'hidden', pointerEvents: 'none' }} />
       {loading && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}>
           <div style={{ textAlign: 'center' }}>
