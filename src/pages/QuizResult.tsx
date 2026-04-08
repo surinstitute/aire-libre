@@ -627,6 +627,16 @@ const QuizResult: React.FC = () => {
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
               Explorar el mapa
             </button>
+            <div style={{ marginTop: '12px' }}>
+              <a
+                href="/recomendaciones"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: '12px', color: pF.accent, opacity: 0.7, textDecoration: 'underline', fontFamily: "'Space Mono', monospace" }}
+              >
+                ¿Qué hago yo con todo esto? →
+              </a>
+            </div>
           </FadeIn>
         </div>
       ),

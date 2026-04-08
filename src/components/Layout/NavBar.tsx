@@ -11,6 +11,7 @@ const NAV = [
   { label: 'MAPA', route: '/map' },
   { label: 'TEST', route: '/quiz' },
   { label: 'PREGUNTAS POSIBLES', route: '/faq' },
+  { label: '¿QUÉ HAGO?', route: '/recomendaciones' },
   { label: 'RECURSOS', route: '/resources' },
 ];
 
@@ -208,6 +209,7 @@ export default function NavBar({ variant = 'transparent' }: NavBarProps) {
           .nb-overlay--open .nb-overlay-btn:nth-child(2) { transition-delay: 0.14s; }
           .nb-overlay--open .nb-overlay-btn:nth-child(3) { transition-delay: 0.20s; }
           .nb-overlay--open .nb-overlay-btn:nth-child(4) { transition-delay: 0.26s; }
+          .nb-overlay--open .nb-overlay-btn:nth-child(5) { transition-delay: 0.32s; }
           .nb-overlay-btn:active { opacity: 1; }
 
           .nb-overlay-logos {
