@@ -6,6 +6,7 @@ import Quiz from './pages/Quiz';
 import QuizResult from './pages/QuizResult.tsx';
 import FAQ from './pages/FAQ';
 import Recommendations from './pages/Recommendations.tsx';
+import Resources from './pages/Resources.tsx';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/quiz/resultado" element={<QuizResult />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/recomendaciones" element={<Recommendations />} />
+          <Route path="/resources" element={<Resources />} />
         </Route>
       </Routes>
     </BrowserRouter>
