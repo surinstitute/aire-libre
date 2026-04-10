@@ -78,7 +78,7 @@ Desarrollado para el [Instituto del Sur Urbano](https://sur.institute) en colabo
 - Compartir vía Web Share API (mobile), Twitter y Facebook
 - Descarga directa como PNG
 
-### Preguntas Posibles (FAQ)
+### Preguntas Relacionadas (FAQ)
 - 14 preguntas frecuentes en formato acordeón
 - Temas: edad, tabaco, embarazo, factores socioeconómicos, pájaros, SEDEMA, cambio climático, derechos humanos
 

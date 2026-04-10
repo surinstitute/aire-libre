@@ -324,7 +324,7 @@ export default function FAQ() {
 
       {/* Content */}
       <div className="faq-content">
-        <h1 className="faq-title">Preguntas Posibles</h1>
+        <h1 className="faq-title">Preguntas Relacionadas</h1>
         <p className="faq-subtitle">
           Respuestas a las dudas más comunes sobre calidad del aire, salud y derechos en la Zona Metropolitana del Valle de México.
         </p>

@@ -10,7 +10,7 @@ interface NavBarProps {
 const NAV = [
   { label: 'MAPA', route: '/map' },
   { label: 'TEST', route: '/quiz' },
-  { label: 'PREGUNTAS POSIBLES', route: '/faq' },
+  { label: 'PREGUNTAS RELACIONADAS', route: '/faq' },
   { label: '¿QUÉ HAGO?', route: '/recomendaciones' },
   { label: 'RECURSOS', route: '/resources' },
 ];
