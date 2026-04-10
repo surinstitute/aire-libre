@@ -60,11 +60,11 @@ export default function Footer() {
           letter-spacing: 0.5px;
         }
         .footer-credit img {
-          height: 22px;
+          height: 64px;
           opacity: 0.7;
         }
         .footer-credit-logo {
-          height: 36px;
+          height: 64px;
         }
         .footer-credit-link {
           display: inline-flex;
@@ -75,8 +75,22 @@ export default function Footer() {
       <footer className="footer">
         <div className="footer-socials">
           <a href={SOCIALS.web} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5Zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5Zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Zm5.5-1.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#607d8b"
+              stroke-width="1"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+              <path d="M3.6 9h16.8" />
+              <path d="M3.6 15h16.8" />
+              <path d="M11.5 3a17 17 0 0 0 0 18" />
+              <path d="M12.5 3a17 17 0 0 1 0 18" />
             </svg>
           </a>
           <a href={SOCIALS.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
