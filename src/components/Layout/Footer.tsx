@@ -3,9 +3,9 @@ import logoBC from '../../assets/Logo_BreatheCities.svg';
 // Replace these with the real profile URLs
 const SOCIALS = {
   web: 'https://www.sur.institute/',
-  instagram: 'https://www.instagram.com/institutodelsururbano/',
-  facebook: 'https://www.facebook.com/institutodelsururbano/',
-  linkedin: 'https://www.linkedin.com/company/institutodelsururbano/',
+  instagram: 'https://www.instagram.com/surinstitute/',
+  facebook: 'https://www.facebook.com/surinstitute/',
+  linkedin: 'https://www.linkedin.com/company/surinstitute/',
   breatheCities: 'https://www.breathecities.org/',
 };
 
