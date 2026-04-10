@@ -249,7 +249,7 @@ export default function Recommendations() {
           </a>
           . También puedes escribirnos por{' '}
           <a
-            href="https://www.instagram.com/institutodelsururbano/"
+            href="https://www.instagram.com/surinstitute/"
             target="_blank"
             rel="noopener noreferrer"
           >
