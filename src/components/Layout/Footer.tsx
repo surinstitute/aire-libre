@@ -2,9 +2,11 @@ import logoBC from '../../assets/Logo_BreatheCities.svg';
 
 // Replace these with the real profile URLs
 const SOCIALS = {
+  web: 'https://www.sur.institute/',
   instagram: 'https://www.instagram.com/institutodelsururbano/',
   facebook: 'https://www.facebook.com/institutodelsururbano/',
   linkedin: 'https://www.linkedin.com/company/institutodelsururbano/',
+  breatheCities: 'https://www.breathecities.org/',
 };
 
 export default function Footer() {
@@ -53,7 +55,7 @@ export default function Footer() {
           display: flex;
           align-items: center;
           gap: 10px;
-          font-size: 11px;
+          font-size: 18px;
           color: rgba(255, 255, 255, 0.55);
           letter-spacing: 0.5px;
         }
@@ -61,10 +63,22 @@ export default function Footer() {
           height: 22px;
           opacity: 0.7;
         }
+        .footer-credit-logo {
+          height: 36px;
+        }
+        .footer-credit-link {
+          display: inline-flex;
+          align-items: center;
+        }
       `}</style>
 
       <footer className="footer">
         <div className="footer-socials">
+          <a href={SOCIALS.web} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5Zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5Zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Zm5.5-1.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z" />
+            </svg>
+          </a>
           <a href={SOCIALS.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5Zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5Zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Zm5.5-1.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z" />
@@ -83,7 +97,15 @@ export default function Footer() {
         </div>
         <div className="footer-credit">
           <span>Proyecto apoyado por</span>
-          <img src={logoBC} alt="Breathe Cities" />
+          <a
+            href={SOCIALS.breatheCities}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Breathe Cities"
+            className="footer-credit-link"
+          >
+            <img src={logoBC} alt="Breathe Cities" className="footer-credit-logo" />
+          </a>
         </div>
       </footer>
     </>

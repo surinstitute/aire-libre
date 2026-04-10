@@ -305,7 +305,7 @@ export default function Home() {
           <button className="hp-btn" onClick={() => navigate('/quiz')}>Hacer test</button>
         </div>
 
-        <p className="hp-tagline">conoce tu nivel de riesgo en diferentes puntos de la ciudad</p>
+        <p className="hp-tagline">Conoce tu nivel de riesgo en diferentes puntos de la ciudad</p>
 
         <p className="hp-quote">
           Porque vivir bajo el mismo<br />

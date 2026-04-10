@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logoSur from '../../assets/Logo_SUR25.svg';
 import logoBC from '../../assets/Logo_BreatheCities.svg';
 
@@ -103,6 +103,10 @@ export default function NavBar({ variant = 'transparent' }: NavBarProps) {
           display: flex;
           align-items: center;
           gap: 16px;
+        }
+        .nb-logos-link {
+          display: flex;
+          text-decoration: none;
         }
         .nb-logo-sur { height: 62px; }
         .nb-logo-divider {
@@ -252,11 +256,11 @@ export default function NavBar({ variant = 'transparent' }: NavBarProps) {
         </ul>
 
         {/* Logos */}
-        <div className="nb-logos">
-          <img src={logoSur} alt="Instituto del Sur Urbano" className="nb-logo-sur" />
-          <div className="nb-logo-divider" />
-          <img src={logoBC} alt="Breathe Cities" className="nb-logo-bc" />
-        </div>
+        <Link to="/" className="nb-logos-link" aria-label="Ir al inicio">
+          <div className="nb-logos">
+            <img src={logoSur} alt="Instituto del Sur Urbano" className="nb-logo-sur" />
+          </div>
+        </Link>
       </nav>
 
       {/* Mobile overlay menu */}
