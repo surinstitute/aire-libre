@@ -111,16 +111,16 @@ export default function Footer() {
         </div>
         <div className="footer-credit">
           <span>Proyecto apoyado por</span>
-          <a
-            href={SOCIALS.breatheCities}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Breathe Cities"
-            className="footer-credit-link"
-          >
-            <img src={logoBC} alt="Breathe Cities" className="footer-credit-logo" />
-          </a>
         </div>
+        <a
+          href={SOCIALS.breatheCities}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Breathe Cities"
+          className="footer-credit-link"
+        >
+          <img src={logoBC} alt="Breathe Cities" className="footer-credit-logo" />
+        </a>
       </footer>
     </>
   );
