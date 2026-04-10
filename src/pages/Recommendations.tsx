@@ -113,6 +113,25 @@ export default function Recommendations() {
           font-style: normal;
         }
 
+        .rec-report {
+          margin-top: 20px;
+          text-align: center;
+          font-size: 13px;
+          line-height: 1.7;
+          opacity: 0.95;
+        }
+
+        .rec-report a {
+          color: #ffffff;
+          font-weight: 700;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+        }
+
+        .rec-report a:hover {
+          opacity: 0.85;
+        }
+
         @media (max-width: 600px) {
           .rec { padding: 24px 16px 60px; }
           .rec-item { padding: 14px 16px; font-size: 12px; }
@@ -218,6 +237,34 @@ export default function Recommendations() {
           <br /><br />
           Pero mientras avanzamos hacia políticas más ambiciosas, nuestras acciones cotidianas pueden reducir riesgos y acelerar el cambio.
         </div>
+
+        <p className="rec-report">
+          Si encuentras errores o información desactualizada, repórtalo en nuestras redes sociales o en{' '}
+          <a
+            href="https://www.github.com/surinstitute/aire-libre"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
+          . También puedes escribirnos por{' '}
+          <a
+            href="https://www.instagram.com/institutodelsururbano/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Instagram
+          </a>{' '}
+          o{' '}
+          <a
+            href="https://www.facebook.com/institutodelsururbano/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Facebook
+          </a>
+          .
+        </p>
       </div>
     </div>
   );
