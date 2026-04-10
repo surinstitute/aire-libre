@@ -8,7 +8,7 @@ const FrogBirdViewer = lazy(() => import('../components/Bird/FrogBirdViewer'));
 
 type Filtro = 'todos' | 'bajo' | 'medio' | 'alto';
 
-const CUMPL_LABEL: Record<string, string> = { bajo: 'BAJO', medio: 'PROMEDIO', alto: 'MEJOR EQUIDAD' };
+const CUMPL_LABEL: Record<string, string> = { bajo: 'BAJO', medio: 'PROMEDIO', alto: 'MEJOR' };
 const CUMPL_COLORS: Record<string, string> = { bajo: '#ef4444', medio: '#eab308', alto: '#22c55e' };
 
 // ── Tooltips (unchanged) ──

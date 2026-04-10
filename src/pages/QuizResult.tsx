@@ -579,7 +579,7 @@ const QuizResult: React.FC = () => {
     const pF = slidePalettes[7];
     out.push({
       palette: pF,
-      shareData: { slideIndex: 7, palette: pF, title: result.bird.name, body: 'Ante la crisis de aire, NO TE QUEDES EN CASA. Sal y pide un cambio.', birdEmoji: result.bird.emoji, contextoLabel, contextoRaw: result.contexto.raw, individuoLabel, individuoRaw: result.individuo.raw },
+      shareData: { slideIndex: 7, palette: pF, title: result.bird.name, body: 'Ante la crisis de aire, NO TE QUEDES EN LAS NUBES. Sal y construyamos un cambio.', birdEmoji: result.bird.emoji, contextoLabel, contextoRaw: result.contexto.raw, individuoLabel, individuoRaw: result.individuo.raw },
       content: (
         <div style={{ textAlign: 'center', width: '100%', maxWidth: '500px' }}>
           <FadeIn delay={200}>
@@ -604,7 +604,7 @@ const QuizResult: React.FC = () => {
           </FadeIn>
           <FadeIn delay={600}>
             <p style={{ fontSize: '14px', lineHeight: 1.7, opacity: 0.75, marginBottom: '28px' }}>
-              Ante la crisis de aire, <span style={{ fontWeight: 700, color: pF.accent }}>NO TE QUEDES EN CASA</span>. Sal y pide un cambio.
+              Ante la crisis de aire, <span style={{ fontWeight: 700, color: pF.accent }}>NO TE QUEDES EN LAS NUBES</span>. Sal y construyamos un cambio.
             </p>
           </FadeIn>
           <FadeIn delay={700}><div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.12)', marginBottom: '24px' }} /></FadeIn>
