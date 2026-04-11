@@ -255,8 +255,8 @@ export default function MapExplorer() {
         <div className="me-filters-label" style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4, fontFamily: "'Space Mono', monospace", letterSpacing: '0.5px' }}>
           Nivel de equidad y resiliencia
         </div>
-        <FBtn label="Todos" n={cnt('todos')} on={filtro === 'todos'} c="#6b7280" click={() => { setFiltro('todos'); if (isMobile) setFiltersOpen(false); }} />
-        <FBtn label="Mejor equidad" n={cnt('alto')} on={filtro === 'alto'} c="#4ade80" click={() => { setFiltro('alto'); if (isMobile) setFiltersOpen(false); }} />
+        <FBtn label="Todos los CP" n={cnt('todos')} on={filtro === 'todos'} c="#6b7280" click={() => { setFiltro('todos'); if (isMobile) setFiltersOpen(false); }} />
+        <FBtn label="Mejor" n={cnt('alto')} on={filtro === 'alto'} c="#4ade80" click={() => { setFiltro('alto'); if (isMobile) setFiltersOpen(false); }} />
         <FBtn label="Promedio" n={cnt('medio')} on={filtro === 'medio'} c="#fbbf24" click={() => { setFiltro('medio'); if (isMobile) setFiltersOpen(false); }} />
         <FBtn label="Bajo" n={cnt('bajo')} on={filtro === 'bajo'} c="#ef4444" click={() => { setFiltro('bajo'); if (isMobile) setFiltersOpen(false); }} />
       </div>
