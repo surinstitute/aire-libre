@@ -7,6 +7,7 @@ import QuizResult from './pages/QuizResult.tsx';
 import FAQ from './pages/FAQ';
 import Recommendations from './pages/Recommendations.tsx';
 import Resources from './pages/Resources.tsx';
+import Methodology from './pages/Methodology.tsx';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/faq" element={<FAQ />} />
           <Route path="/recomendaciones" element={<Recommendations />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/metodologia" element={<Methodology />} />
         </Route>
       </Routes>
     </BrowserRouter>
