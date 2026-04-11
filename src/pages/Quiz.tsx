@@ -33,7 +33,7 @@ const C = {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    minHeight: '100vh',
+    minHeight: 'calc(100vh - var(--header-height))',
     background: 'linear-gradient(170deg, #9DD0F3 0%, #7CB9E2 30%, #6AADDA 60%, #5A9FCC 100%)',
     display: 'flex',
     flexDirection: 'column',
@@ -45,7 +45,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   progressBarContainer: {
     position: 'fixed',
-    top: 0, left: 0, right: 0,
+    top: 'var(--header-height)', left: 0, right: 0,
     height: '4px',
     backgroundColor: C.progressBg,
     zIndex: 100,
