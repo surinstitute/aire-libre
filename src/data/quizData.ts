@@ -300,6 +300,9 @@ export function calculateResult(
 // AIR CALCULATOR (unchanged)
 // -----------------------------------------------------------
 
+const AIR_DENSITY_KG_PER_CUBIC_METER = 1.225;
+const LITERS_PER_CUBIC_METER = 1000;
+
 export function calculateDailyAir(
   pesoKg: number,
   estaturaCm: number,
@@ -335,6 +338,10 @@ export function calculateDailyAir(
     exerciseVentilation * exerciseMinutesPerDay;
 
   return Math.round(totalLiters);
+}
+
+export function convertAirLitersToKilograms(liters: number): number {
+  return liters * (AIR_DENSITY_KG_PER_CUBIC_METER / LITERS_PER_CUBIC_METER);
 }
 
 // -----------------------------------------------------------
