@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logoSur from '../../assets/Logo_SUR25.svg';
 import logoBC from '../../assets/Logo_BreatheCities.svg';
 
@@ -10,9 +10,9 @@ interface NavBarProps {
 const NAV = [
   { label: 'MAPA', route: '/map' },
   { label: 'TEST', route: '/quiz' },
-  { label: 'PREGUNTAS RELACIONADAS', route: '/faq' },
+  { label: 'PREGUNTAS POSIBLES', route: '/faq' },
   { label: '¿QUÉ HAGO?', route: '/recomendaciones' },
-  { label: 'RECURSOS', route: '/resources' },
+  { label: 'METODOLOGÍA', route: '/metodologia' },
 ];
 
 export default function NavBar({ variant = 'transparent' }: NavBarProps) {
@@ -103,10 +103,6 @@ export default function NavBar({ variant = 'transparent' }: NavBarProps) {
           display: flex;
           align-items: center;
           gap: 16px;
-        }
-        .nb-logos-link {
-          display: flex;
-          text-decoration: none;
         }
         .nb-logo-sur { height: 62px; }
         .nb-logo-divider {
@@ -256,11 +252,11 @@ export default function NavBar({ variant = 'transparent' }: NavBarProps) {
         </ul>
 
         {/* Logos */}
-        <Link to="/" className="nb-logos-link" aria-label="Ir al inicio">
-          <div className="nb-logos">
-            <img src={logoSur} alt="Instituto del Sur Urbano" className="nb-logo-sur" />
-          </div>
-        </Link>
+        <div className="nb-logos">
+          <img src={logoSur} alt="Instituto del Sur Urbano" className="nb-logo-sur" />
+          <div className="nb-logo-divider" />
+          <img src={logoBC} alt="Breathe Cities" className="nb-logo-bc" />
+        </div>
       </nav>
 
       {/* Mobile overlay menu */}
