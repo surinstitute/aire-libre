@@ -31,7 +31,7 @@ export default function Home() {
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         .hp {
-          min-height: 100vh;
+          min-height: calc(100vh - var(--header-height));
           background:
             radial-gradient(ellipse 80% 60% at 42% 48%, rgba(255,255,255,0.07) 0%, transparent 60%),
             radial-gradient(ellipse 50% 70% at 80% 70%, rgba(74,141,191,0.2) 0%, transparent 50%),
@@ -46,7 +46,7 @@ export default function Home() {
         .hp-hero {
           position: relative;
           width: 100%;
-          height: 100vh;
+          height: calc(100vh - var(--header-height));
           display: flex;
           align-items: center;
           justify-content: center;
@@ -170,7 +170,7 @@ export default function Home() {
         @media (max-width: 768px) {
           .hp-hero {
             height: auto;
-            min-height: 100vh;
+            min-height: calc(100vh - var(--header-height));
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;

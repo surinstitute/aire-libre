@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   calculateResult,
   calculateDailyAir,
+  convertAirLitersToKilograms,
   quizQuestions,
 } from '../data/quizData';
 import type { QuizAnswers, BirdProfile } from '../data/quizData';
@@ -66,7 +67,7 @@ const FadeIn: React.FC<{ children: React.ReactNode; delay?: number }> = ({ child
 // ============================================================
 const SITE_URL = 'https://aire-libre-tawny.vercel.app';
 
-function getShareText(bird: BirdProfile, _total: number): string {
+function getShareText(bird: BirdProfile): string {
   return `Hice el test de Aire Libre y soy un ${bird.name} 🐦. ¿Cuál eres tú? Descúbrelo en ${SITE_URL}/quiz`;
 }
 
@@ -295,8 +296,7 @@ function generateSlideShareImage(data: SlideShareData): Promise<Blob | null> {
 
 async function shareSlideAsImage(
   data: SlideShareData,
-  bird: BirdProfile,
-  total: number
+  bird: BirdProfile
 ): Promise<'shared' | 'downloaded' | 'error'> {
   const blob = await generateSlideShareImage(data);
   if (!blob) return 'error';
@@ -307,7 +307,7 @@ async function shareSlideAsImage(
     const file = new File([blob], 'aire-libre-resultado.png', { type: 'image/png' });
     if (navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({ text: getShareText(bird, total), files: [file] });
+        await navigator.share({ text: getShareText(bird), files: [file] });
         return 'shared';
       } catch (err) {
         if ((err as Error).name === 'AbortError') return 'shared';
@@ -412,6 +412,10 @@ const QuizResult: React.FC = () => {
     if (!hasPesoEstatura) return null;
     return calculateDailyAir(parseFloat(answers.peso as string) || 70, parseFloat(answers.estatura as string) || 170, answers.edad as string, answers.ejercicio as string);
   }, [answers, hasPesoEstatura]);
+  const dailyAirKg = useMemo(() => {
+    if (dailyAir === null) return null;
+    return convertAirLitersToKilograms(dailyAir);
+  }, [dailyAir]);
 
   const getLabel = (qId: string, val: string): string => {
     const q = quizQuestions.find((q) => q.id === qId);
@@ -489,9 +493,13 @@ const QuizResult: React.FC = () => {
     // 3 — Litros de aire
     if (dailyAir) {
       const p2 = slidePalettes[2];
+      const dailyAirKgLabel = dailyAirKg?.toLocaleString('es-MX', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      });
       out.push({
         palette: p2,
-        shareData: { slideIndex: 2, palette: p2, title: 'Litros de aire diarios', bigText: dailyAir.toLocaleString(), body: `Eso equivale a aproximadamente ${Math.round(dailyAir / 1000)} mil litros. La calidad de ese aire importa más de lo que crees.` },
+        shareData: { slideIndex: 2, palette: p2, title: 'Litros de aire diarios', bigText: dailyAir.toLocaleString(), body: `Eso pesa aproximadamente ${dailyAirKgLabel} kg de aire. La calidad de ese aire importa más de lo que crees.` },
         content: (
           <div style={{ textAlign: 'center' }}>
             <FadeIn delay={200}>
@@ -500,7 +508,7 @@ const QuizResult: React.FC = () => {
               <div style={{ fontSize: '18px', opacity: 0.6, marginTop: '-8px', marginBottom: '24px' }}>litros de aire</div>
             </FadeIn>
             <FadeIn delay={600}>
-              <p style={s(p2).body}>Eso equivale a aproximadamente <span style={s(p2).accent}>{Math.round(dailyAir / 1000)} mil</span> litros. La calidad de ese aire importa más de lo que crees.</p>
+              <p style={s(p2).body}>Eso pesa aproximadamente <span style={s(p2).accent}>{dailyAirKgLabel} kg</span> de aire. La calidad de ese aire importa más de lo que crees.</p>
             </FadeIn>
           </div>
         ),
@@ -643,8 +651,7 @@ const QuizResult: React.FC = () => {
     });
 
     return out;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answers, result, dailyAir, cpRiskLevel, colonia, goToMap]);
+  }, [answers, result, dailyAir, dailyAirKg, cpRiskLevel, colonia, goToMap]);
 
   const total = slides.length;
   const goTo = useCallback((i: number) => { if (i >= 0 && i < total) { setCurrentSlide(i); setAnimKey((k) => k + 1); setShareStatus(null); } }, [total]);
@@ -658,7 +665,7 @@ const QuizResult: React.FC = () => {
     if (shareData.birdEmoji && birdSnapshotFn.current) {
       shareData.birdImageUrl = birdSnapshotFn.current();
     }
-    const status = await shareSlideAsImage(shareData, result.bird, result.total);
+    const status = await shareSlideAsImage(shareData, result.bird);
     if (status === 'shared') setShareStatus('¡Compartido!');
     else if (status === 'downloaded') setShareStatus('¡Imagen descargada!');
     else setShareStatus('Error al generar imagen');
