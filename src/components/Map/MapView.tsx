@@ -18,6 +18,7 @@ const COLORS: Record<string, string> = {
   bajo: '#fca5a5',
   medio: '#fcd34d',
   alto: '#86efac',
+  sin_datos: '#d1d5db',
   default: '#9ca3af',
 };
 
@@ -25,6 +26,7 @@ const BADGE_COLORS: Record<string, string> = {
   bajo: '#ef4444',
   medio: '#eab308',
   alto: '#22c55e',
+  sin_datos: '#9ca3af',
 };
 
 function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {

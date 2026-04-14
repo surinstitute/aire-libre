@@ -8,8 +8,8 @@ const FrogBirdViewer = lazy(() => import('../components/Bird/FrogBirdViewer'));
 
 type Filtro = 'todos' | 'bajo' | 'medio' | 'alto';
 
-const CUMPL_LABEL: Record<string, string> = { bajo: 'BAJO', medio: 'PROMEDIO', alto: 'MEJOR' };
-const CUMPL_COLORS: Record<string, string> = { bajo: '#ef4444', medio: '#eab308', alto: '#22c55e' };
+const CUMPL_LABEL: Record<string, string> = { bajo: 'BAJO', medio: 'PROMEDIO', alto: 'MEJOR', sin_datos: 'SIN DATOS' };
+const CUMPL_COLORS: Record<string, string> = { bajo: '#ef4444', medio: '#eab308', alto: '#22c55e', sin_datos: '#9ca3af' };
 
 // ── Tooltips (unchanged) ──
 const TT: Record<string, { title: string; body: string }> = {
@@ -264,7 +264,7 @@ export default function MapExplorer() {
       {/* Legend */}
       <div className="me-legend">
         <div style={{ fontSize: 10, fontWeight: 700, color: '#374151', marginBottom: 8, fontFamily: "'Space Mono', monospace", letterSpacing: '1px' }}>NIVEL DE EQUIDAD Y RESILIENCIA</div>
-        {[['Mejor equidad', '#4ade80'], ['Promedio', '#fbbf24'], ['Bajo', '#ef4444']].map(([l, c]) => (
+        {[['Mejor equidad', '#4ade80'], ['Promedio', '#fbbf24'], ['Bajo', '#ef4444'], ['Sin datos', '#d1d5db']].map(([l, c]) => (
           <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: c }} />
             <span style={{ fontSize: 11, color: '#374151', fontFamily: "'Space Mono', monospace" }}>{l}</span>
