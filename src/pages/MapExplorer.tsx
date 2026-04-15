@@ -6,7 +6,7 @@ import type { Colonia } from '../types';
 
 const FrogBirdViewer = lazy(() => import('../components/Bird/FrogBirdViewer'));
 
-type Filtro = 'todos' | 'bajo' | 'medio' | 'alto';
+type Filtro = 'todos' | 'bajo' | 'medio' | 'alto' | 'sin_datos';
 
 const CUMPL_LABEL: Record<string, string> = { bajo: 'BAJO', medio: 'PROMEDIO', alto: 'MEJOR', sin_datos: 'SIN DATOS' };
 const CUMPL_COLORS: Record<string, string> = { bajo: '#ef4444', medio: '#eab308', alto: '#22c55e', sin_datos: '#9ca3af' };
@@ -124,7 +124,7 @@ export default function MapExplorer() {
 
         /* ── Filters panel — desktop ── */
         .me-filters {
-          position: absolute; top: 80px; left: 20px;
+          position: absolute; bottom: 30px; left: 20px;
           background-color: white; padding: 12px 16px; border-radius: 12px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10;
           display: flex; flex-direction: column; gap: 8px;
@@ -148,7 +148,7 @@ export default function MapExplorer() {
 
         /* ── Bird — desktop only ── */
         .me-bird {
-          position: absolute; bottom: 120px; left: -25px;
+          position: absolute; bottom: 280px; left: -25px;
           width: 300px; height: 180px; z-index: 5; pointer-events: none;
         }
 
@@ -259,18 +259,10 @@ export default function MapExplorer() {
         <FBtn label="Mejor" n={cnt('alto')} on={filtro === 'alto'} c="#4ade80" click={() => { setFiltro('alto'); if (isMobile) setFiltersOpen(false); }} />
         <FBtn label="Promedio" n={cnt('medio')} on={filtro === 'medio'} c="#fbbf24" click={() => { setFiltro('medio'); if (isMobile) setFiltersOpen(false); }} />
         <FBtn label="Bajo" n={cnt('bajo')} on={filtro === 'bajo'} c="#ef4444" click={() => { setFiltro('bajo'); if (isMobile) setFiltersOpen(false); }} />
+        <FBtn label="Sin datos" n={cnt('sin_datos')} on={filtro === 'sin_datos'} c="#d1d5db" click={() => { setFiltro('sin_datos'); if (isMobile) setFiltersOpen(false); }} />  
       </div>
 
-      {/* Legend */}
-      <div className="me-legend">
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#374151', marginBottom: 8, fontFamily: "'Space Mono', monospace", letterSpacing: '1px' }}>NIVEL DE EQUIDAD Y RESILIENCIA</div>
-        {[['Mejor equidad', '#4ade80'], ['Promedio', '#fbbf24'], ['Bajo', '#ef4444'], ['Sin datos', '#d1d5db']].map(([l, c]) => (
-          <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: c }} />
-            <span style={{ fontSize: 11, color: '#374151', fontFamily: "'Space Mono', monospace" }}>{l}</span>
-          </div>
-        ))}
-      </div>
+     
 
       {/* Map */}
       <div className="me-map-container">
