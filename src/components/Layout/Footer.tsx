@@ -70,6 +70,15 @@ export default function Footer() {
           display: inline-flex;
           align-items: center;
         }
+        .footer-disclaimer {
+          max-width: 720px;
+          margin: 4px 0 0;
+          text-align: center;
+          font-size: 13px;
+          line-height: 1.6;
+          color: rgba(255, 255, 255, 0.62);
+          font-family: 'Space Mono', monospace;
+        }
       `}</style>
 
       <footer className="footer">
@@ -121,6 +130,10 @@ export default function Footer() {
         >
           <img src={logoBC} alt="Breathe Cities" className="footer-credit-logo" />
         </a>
+        <p className="footer-disclaimer">
+          Esta herramienta es de divulgación. No está diseñada para ofrecer
+          orientación médica y puede contener errores u omisiones. Si tienes síntomas relacionados con la calidad del aire, consulta a un profesional de la salud.
+        </p>
       </footer>
     </>
   );
