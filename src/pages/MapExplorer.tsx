@@ -177,53 +177,47 @@ export default function MapExplorer() {
 
           /* Filters: hidden by default, toggle via FAB */
           .me-filters {
-            position: fixed; bottom: 80px; left: 12px; right: 12px;
+            position: fixed;
+            bottom: 80px;
+            left: 12px;
+            right: 12px;
             top: auto;
             border-radius: 12px;
             display: none;
-            flex-direction: row; flex-wrap: wrap; gap: 6px;
-            padding: 12px;
+            flex-direction: column;
+            gap: 6px;
+            padding: 14px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
+            max-height: 60vh;
+            overflow-y: auto;
+            z-index: 20;
           }
           .me-filters--open { display: flex; }
-          .me-filters .me-filters-label { width: 100%; margin-bottom: 2px; }
+          .me-filters .me-filters-label {
+            width: 100%;
+            margin-bottom: 4px;
+            font-size: 12px !important;
+          }
 
           /* FAB for filters */
           .me-filters-fab {
             display: flex;
-            position: absolute; bottom: 24px; left: 12px;
-            width: 44px; height: 44px; border-radius: 50%;
-            background: white; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-            align-items: center; justify-content: center;
-            cursor: pointer; z-index: 10;
-            font-size: 18px;
-          }
-
-          /* Legend: compact bottom */
-          .me-legend {
-            bottom: 24px; left: auto; right: 12px;
-            padding: 8px 12px;
-            font-size: 9px;
-          }
-          .me-legend span { font-size: 9px !important; }
-
-          /* Info panel: bottom sheet */
-          .me-info {
             position: fixed;
-            top: auto; right: 0; left: 0; bottom: 0;
-            width: 100%; max-height: 55vh;
-            border-radius: 16px 16px 0 0;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
-          }
-          .me-info-drag {
-            display: flex;
+            bottom: 20px;
+            left: 16px;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+            align-items: center;
             justify-content: center;
-            padding: 8px 0 4px;
+            cursor: pointer;
+            z-index: 25;
+            font-size: 22px;
+            font-weight: 700;
           }
-          .me-info-drag-bar {
-            width: 40px; height: 4px; border-radius: 2px;
-            background: #d1d5db;
-          }
-        }
       `}</style>
 
       {/* Header */}
