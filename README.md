@@ -114,8 +114,8 @@ Desarrollado para el [Instituto del Sur Urbano](https://sur.institute) en colabo
 
 ### Requisitos previos
 
-- [Node.js](https://nodejs.org) 18 o superior
-- npm 9+
+- [Node.js](https://nodejs.org) 20
+- [pnpm](https://pnpm.io/)
 
 ### Instalación
 
@@ -127,14 +127,14 @@ git clone https://github.com/surinstitute/aire-libre.git
 cd aire-libre
 
 # Instalar dependencias
-npm install
+pnpm install
 
 # Configurar variables de entorno
 cp .env.example .env
 # Editar .env con tus credenciales (ver sección siguiente)
 
 # Iniciar servidor de desarrollo
-npm run dev
+pnpm run dev
 ```
 
 Abre [http://localhost:5173](http://localhost:5173) en tu navegador.
