@@ -6,8 +6,63 @@ let coloniasCache: Colonia[] | null = null;
 type CsvRow = Record<string, string>;
 
 function parseNumber(value: string): number {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+  const trimmed = value?.trim() ?? '';
+  if (trimmed === '') return NaN;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
+const DATA_FIELDS = [
+  'sub_estado_fisico',
+  'subindice_salud',
+  'pob_sin_diabetes',
+  'pob_sin_hipertension',
+  'pob_sin_enf_respiratorias',
+  'pob_sin_infecciones_resp_tb',
+  'pob_sin_enf_cardiovasculares',
+  'poblacion_sensible',
+  'poblacion_total',
+  'pob_no_fumadores',
+  'subindice_aire',
+  'dias_aire_limpio_pm25',
+  'concentracion_alta_pm25',
+  'dias_aire_limpio_ozono',
+  'concentracion_alta_ozono',
+  'indice_infraestructura_sanitaria',
+  'proximidad_infraestructura_medica',
+  'pob_derechohabiente',
+  'subindice_socioeconomico',
+  'anos_escolaridad',
+  'viviendas_computadora',
+  'viviendas_lavadora',
+  'viviendas_refrigerador',
+  'indice_desarrollo',
+  'indice_prioridad_sensible',
+  'indice_resumen',
+  'subindice_cambio_climatico',
+  'indice_frescura',
+  'seguridad_inundaciones',
+];
+
+function hasDataFields(row: CsvRow): boolean {
+  return DATA_FIELDS.some((key) => {
+    if (key === 'poblacion_total') return false;
+    const value = row[key]?.trim() ?? '';
+    return value !== '' && value !== '0';
+  });
+}
+
+function normalizeCategoriaRiesgo(value?: string, row?: CsvRow): Colonia['categoria_riesgo'] {
+  if (row && !hasDataFields(row)) {
+    return 'sin_datos';
+  }
+
+  const raw = value?.trim().toLowerCase() ?? '';
+  const normalized = raw.replace(/\s+/g, '_');
+  if (normalized === 'bajo' || normalized === 'medio' || normalized === 'alto' || normalized === 'sin_datos') {
+    return normalized as Colonia['categoria_riesgo'];
+  }
+  return 'sin_datos';
 }
 
 function normalizeRow(row: CsvRow): Colonia {
@@ -47,7 +102,7 @@ function normalizeRow(row: CsvRow): Colonia {
     subindice_cambio_climatico: parseNumber(row.subindice_cambio_climatico),
     indice_frescura: parseNumber(row.indice_frescura),
     seguridad_inundaciones: parseNumber(row.seguridad_inundaciones),
-    categoria_riesgo: (row.categoria_riesgo as 'bajo' | 'medio' | 'alto') || 'medio'
+    categoria_riesgo: normalizeCategoriaRiesgo(row.categoria_riesgo, row)
   };
 }
 
@@ -70,7 +125,7 @@ export const coloniaService = {
     return colonias.find((c) => c.codigo_postal === cpNormalizado) ?? null;
   },
 
-  async getColoniasByRiesgo(categoria: 'bajo' | 'medio' | 'alto'): Promise<Colonia[]> {
+  async getColoniasByRiesgo(categoria: Colonia['categoria_riesgo']): Promise<Colonia[]> {
     const colonias = await loadColonias();
     return colonias.filter((c) => c.categoria_riesgo === categoria);
   },

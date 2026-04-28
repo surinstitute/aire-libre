@@ -18,13 +18,15 @@ const CUMPL_USER_LABEL: Record<string, string> = {
   alto: 'Mejor cumplimiento',
   medio: 'Cumplimiento promedio',
   bajo: 'Cumplimiento bajo',
+  sin_datos: 'Datos no disponibles',
 };
 const CUMPL_USER_DESC: Record<string, string> = {
   alto: 'Tu colonia forma parte del tercio con mejores condiciones relativas en calidad del aire, salud y acceso a servicios.',
   medio: 'Tu colonia se encuentra en el tercio intermedio. No está entre las peores, pero tampoco entre las mejores.',
   bajo: 'Tu colonia forma parte del tercio con mayores desventajas en calidad del aire, salud y acceso a servicios.',
+  sin_datos: 'No hay datos disponibles para esta colonia. Intenta otra ubicación o vuelve más tarde.',
 };
-const CUMPL_COLORS: Record<string, string> = { alto: '#86efac', medio: '#fcd34d', bajo: '#fca5a5' };
+const CUMPL_COLORS: Record<string, string> = { alto: '#86efac', medio: '#fcd34d', bajo: '#fca5a5', sin_datos: '#9ca3af' };
 
 // ============================================================
 // Axis colors
@@ -406,7 +408,12 @@ const QuizResult: React.FC = () => {
   useEffect(() => { if (Object.keys(answers).length === 0) navigate('/quiz'); }, [answers, navigate]);
 
   const cpRiskLevel = colonia?.categoria_riesgo ?? 'medio';
-  const result = useMemo(() => calculateResult(cpRiskLevel, answers), [cpRiskLevel, answers]);
+  const effectiveRiskLevel: 'bajo' | 'medio' | 'alto' =
+    cpRiskLevel === 'sin_datos' ? 'medio' : cpRiskLevel;
+  const result = useMemo(
+    () => calculateResult(effectiveRiskLevel, answers),
+    [effectiveRiskLevel, answers],
+  );
   const hasPesoEstatura = !!(answers.peso && answers.estatura);
   const dailyAir = useMemo(() => {
     if (!hasPesoEstatura) return null;

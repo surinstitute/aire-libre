@@ -2,6 +2,8 @@ import type { QuizAnswers } from '../data/quizData';
 
 export type { QuizAnswers };
 
+export type CategoriaRiesgo = 'bajo' | 'medio' | 'alto' | 'sin_datos';
+
 export interface Colonia {
   // Identificadores
   codigo_postal: string;
@@ -56,7 +58,7 @@ export interface Colonia {
   indice_frescura: number;
   seguridad_inundaciones: number;
   
-  categoria_riesgo: 'bajo' | 'medio' | 'alto';
+  categoria_riesgo: CategoriaRiesgo;
 }
 
 export interface UserSession {
