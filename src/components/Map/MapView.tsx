@@ -1,34 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import maplibregl, { type StyleSpecification } from "maplibre-gl";
+import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Colonia } from "../../types";
 
 const POLYGON_GEOJSON_URL = new URL('../../assets/geometrias_cp.geojson', import.meta.url).href;
 
-const OSM_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: "raster",
-      tiles: [
-        "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      ],
-      tileSize: 256,
-      attribution: "© OpenStreetMap contributors",
-    },
-  },
-  layers: [
-    {
-      id: "osm-base",
-      type: "raster",
-      source: "osm",
-      minzoom: 0,
-      maxzoom: 19,
-    },
-  ],
-};
+const VECTOR_STYLE = 'https://tiles.openfreemap.org/styles/fiord';
 
 interface MapViewProps {
   colonias: Colonia[];
@@ -41,8 +18,8 @@ const COLORS: Record<string, string> = {
   bajo: "#fca5a5",
   medio: "#fcd34d",
   alto: "#86efac",
-  sin_datos: "#d1d5db",
-  default: "#9ca3af",
+  sin_datos: "#9ca3af",
+  default: "#d1d5db",
 };
 
 const BADGE_COLORS: Record<string, string> = {
@@ -59,6 +36,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
   const [mapReady, setMapReady] = useState(false);
   const [hoveredCP, setHoveredCP] = useState<string | null>(null);
   const coloniasByCP = useRef<Map<string, Colonia>>(new Map());
+  const polygonDataRef = useRef<GeoJSON.FeatureCollection | null>(null);
 
   useEffect(() => {
     const lookup = new Map<string, Colonia>();
@@ -71,7 +49,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: OSM_STYLE,
+      style: VECTOR_STYLE,
       center: [-99.1332, 19.4326],
       zoom: 10,
       minZoom: 8,
@@ -87,6 +65,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
         if (!response.ok)
           throw new Error(`Error loading polygon data: ${response.status}`);
         const polygonData = await response.json();
+        polygonDataRef.current = polygonData;
 
         map.current!.addSource("polygons", {
           type: "geojson",
@@ -96,20 +75,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       } catch (error) {
         console.error(error);
       }
-
-      // CDMX perimeter silhouette
-
-      map.current!.addLayer({
-        id: "cdmx-perimetro-line",
-        type: "line",
-        source: "cdmx-perimetro",
-        paint: {
-          "line-color": "#1C2333",
-          "line-width": 2.5,
-          "line-opacity": 0.6,
-          "line-dasharray": [4, 2],
-        },
-      });
 
       setMapReady(true);
     });
@@ -133,16 +98,44 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       !mapReady ||
       !map.current ||
       colonias.length === 0 ||
-      !map.current.getSource("polygons")
+      !map.current.getSource("polygons") ||
+      !polygonDataRef.current
     )
       return;
 
-    ["polygons-fill", "polygons-outline-hover", "points-circle"].forEach(
+    ["polygons-background", "polygons-fill", "polygons-outline-hover", "points-circle"].forEach(
       (l) => {
         if (map.current!.getLayer(l)) map.current!.removeLayer(l);
       },
     );
     if (map.current.getSource("points")) map.current.removeSource("points");
+    if (map.current.getSource("polygons-highlight")) map.current.removeSource("polygons-highlight");
+
+    const highlightFeatures = polygonDataRef.current.features.filter((feature) => {
+      const cp = String(feature.properties?.codigo_postal ?? '').padStart(5, '0');
+      return coloniasByCP.current.has(cp);
+    });
+
+    const highlightData: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: highlightFeatures,
+    };
+
+    map.current.addSource("polygons-highlight", {
+      type: "geojson",
+      data: highlightData,
+      promoteId: "codigo_postal",
+    });
+
+    map.current.addLayer({
+      id: "polygons-background",
+      type: "fill",
+      source: "polygons",
+      paint: {
+        "fill-color": COLORS.default,
+        "fill-opacity": 0.06,
+      },
+    });
 
     const colorExpr: any[] = ["match", ["to-string", ["get", "codigo_postal"]]];
     colonias.forEach((c) => {
@@ -156,7 +149,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
     map.current.addLayer({
       id: "polygons-fill",
       type: "fill",
-      source: "polygons",
+      source: "polygons-highlight",
       paint: {
         "fill-color": colorExpr as any,
         "fill-opacity": [
@@ -171,7 +164,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
     map.current.addLayer({
       id: "polygons-outline-hover",
       type: "line",
-      source: "polygons",
+      source: "polygons-highlight",
       paint: {
         "line-color": "#000000",
         "line-width": [
@@ -214,6 +207,8 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
           COLORS.medio,
           "alto",
           COLORS.alto,
+          "sin_datos",
+          COLORS.sin_datos,
           COLORS.default,
         ],
         "circle-radius": ["interpolate", ["linear"], ["zoom"], 14, 4, 18, 8],
@@ -230,13 +225,13 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       const cp = String(e.features[0].properties?.codigo_postal);
       if (hovId && hovId !== cp)
         map.current!.setFeatureState(
-          { source: "polygons", id: hovId },
+          { source: "polygons-highlight", id: hovId },
           { hover: false },
         );
       if (cp) {
         hovId = cp;
         map.current!.setFeatureState(
-          { source: "polygons", id: cp },
+          { source: "polygons-highlight", id: cp },
           { hover: true },
         );
         setHoveredCP(cp);
@@ -247,7 +242,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       map.current!.getCanvas().style.cursor = "";
       if (hovId) {
         map.current!.setFeatureState(
-          { source: "polygons", id: hovId },
+          { source: "polygons-highlight", id: hovId },
           { hover: false },
         );
         hovId = null;
@@ -264,7 +259,7 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       const colonia = coloniasByCP.current.get(cp);
       if (colonia && onColoniaClick) onColoniaClick(colonia);
 
-      const cat = (colonia?.categoria_riesgo || "medio") as string;
+      const cat = (colonia?.categoria_riesgo || "sin_datos") as Colonia['categoria_riesgo'];
       const color = BADGE_COLORS[cat] || "#6b7280";
       const cumplLabel =
         cat === "alto"
