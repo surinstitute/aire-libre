@@ -4,6 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { Colonia } from "../../types";
 
 const POLYGON_GEOJSON_URL = new URL('../../assets/geometrias_cp.geojson', import.meta.url).href;
+const PERIMETER_GEOJSON_URL = new URL('../../assets/cdmx_perimetro.json', import.meta.url).href;
 
 const VECTOR_STYLE = 'https://tiles.openfreemap.org/styles/fiord';
 
@@ -71,6 +72,37 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
           type: "geojson",
           data: polygonData,
           promoteId: "codigo_postal",
+        });
+
+        const perimeterResponse = await fetch(PERIMETER_GEOJSON_URL);
+        if (!perimeterResponse.ok)
+          throw new Error(`Error loading perimeter data: ${perimeterResponse.status}`);
+        const perimeterData = await perimeterResponse.json();
+
+        map.current!.addSource("cdmx-perimeter", {
+          type: "geojson",
+          data: perimeterData,
+        });
+
+        map.current!.addLayer({
+          id: "cdmx-perimeter-fill",
+          type: "fill",
+          source: "cdmx-perimeter",
+          paint: {
+            "fill-color": "rgba(106, 173, 218, 0.14)",
+            "fill-outline-color": "rgba(106, 173, 218, 0.65)",
+          },
+        });
+
+        map.current!.addLayer({
+          id: "cdmx-perimeter-line",
+          type: "line",
+          source: "cdmx-perimeter",
+          paint: {
+            "line-color": "rgba(106, 173, 218, 0.95)",
+            "line-width": 4,
+            "line-opacity": 0.95,
+          },
         });
       } catch (error) {
         console.error(error);
@@ -216,6 +248,13 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
         "circle-stroke-color": "#ffffff",
       },
     });
+
+    if (map.current.getLayer("cdmx-perimeter-line")) {
+      map.current.moveLayer("cdmx-perimeter-line");
+    }
+    if (map.current.getLayer("cdmx-perimeter-fill")) {
+      map.current.moveLayer("cdmx-perimeter-fill");
+    }
 
     let hovId: string | null = null;
 
