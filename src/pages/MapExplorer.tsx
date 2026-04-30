@@ -51,6 +51,7 @@ export default function MapExplorer() {
   const [showBird, setShowBird] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectionTrigger, setSelectionTrigger] = useState(0);
 
   // Detect mobile
   useEffect(() => {
@@ -61,11 +62,28 @@ export default function MapExplorer() {
   }, []);
 
   useEffect(() => { coloniaService.getAllColonias().then(d => { setAllColonias(d); setColoniasFiltradas(d); setLoading(false); }).catch(() => setLoading(false)); }, []);
-  useEffect(() => { const cp = searchParams.get('cp'); if (cp && allColonias.length) coloniaService.getColoniaByCP(cp).then(c => { if (c) { setSelected(c); setSearchCP(cp); } }); }, [allColonias, searchParams]);
+  useEffect(() => { const cp = searchParams.get('cp'); if (cp && allColonias.length) coloniaService.getColoniaByCP(cp).then(c => { if (c) { setSelected(c); setSearchCP(cp); setSelectionTrigger(t => t + 1); } }); }, [allColonias, searchParams]);
   useEffect(() => { setColoniasFiltradas(filtro === 'todos' ? allColonias : allColonias.filter(c => c.categoria_riesgo === filtro)); }, [filtro, allColonias]);
   useEffect(() => { if (!loading && !isMobile) { const t = setTimeout(() => setShowBird(true), 3000); return () => clearTimeout(t); } }, [loading, isMobile]);
 
-  const search = async () => { if (!searchCP.trim()) return; const c = await coloniaService.getColoniaByCP(searchCP.trim()); if (c) { setFiltro('todos'); setSelected(c); } else alert('Código postal no encontrado'); };
+  const search = async (rawCP = searchCP) => {
+    const cp = rawCP.trim();
+    if (!cp) return;
+
+    const c = await coloniaService.getColoniaByCP(cp);
+    if (c) {
+      setSearchCP(cp);
+      setFiltro('todos');
+      setSelected(c);
+      setSelectionTrigger(t => t + 1);
+    } else {
+      alert('Código postal no encontrado');
+    }
+  };
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void search();
+  };
   const fmt = (v: number | null | undefined) => v == null || isNaN(v) ? 'N/D' : `${(v * 100).toFixed(1)}%`;
   const cnt = (f: Filtro) => f === 'todos' ? allColonias.length : allColonias.filter(c => c.categoria_riesgo === f).length;
   const toggle = (k: string) => setTip(tip === k ? null : k);
@@ -226,16 +244,15 @@ export default function MapExplorer() {
           <h1>Mapa de Equidad y Resiliencia</h1>
           <p>CDMX y Zona Metropolitana — Aire, salud y acceso a servicios</p>
         </div>
-        <div className="me-header-actions">
+        <form className="me-header-actions" onSubmit={handleSearchSubmit}>
           <input
             type="text" placeholder="Buscar CP..." value={searchCP}
             onChange={e => setSearchCP(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && search()}
             className="me-search-input"
           />
-          <button onClick={search} className="me-header-btn">Buscar</button>
-          <button onClick={() => navigate('/')} className="me-header-btn me-header-btn--light">Inicio</button>
-        </div>
+          <button type="submit" className="me-header-btn">Buscar</button>
+          <button type="button" onClick={() => navigate('/')} className="me-header-btn me-header-btn--light">Inicio</button>
+        </form>
       </div>
 
       {/* Filters FAB — mobile only */}
@@ -260,7 +277,7 @@ export default function MapExplorer() {
 
       {/* Map */}
       <div className="me-map-container">
-        <MapView colonias={coloniasFiltradas} onColoniaClick={setSelected} selectedCP={selected?.codigo_postal} />
+        <MapView colonias={coloniasFiltradas} onColoniaClick={setSelected} selectedCP={selected?.codigo_postal} selectionTrigger={selectionTrigger} />
       </div>
 
       {/* Bird — desktop only (hidden on mobile via CSS) */}

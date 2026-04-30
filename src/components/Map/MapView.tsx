@@ -3,8 +3,9 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Colonia } from "../../types";
 
-const POLYGON_GEOJSON_URL = new URL('../../assets/geometrias_cp.geojson', import.meta.url).href;
-const PERIMETER_GEOJSON_URL = new URL('../../assets/cdmx_perimetro.json', import.meta.url).href;
+const POLYGON_GEOJSON_URL = new URL('../../assets/cp.geojson', import.meta.url).href;
+const PERIMETER_GEOJSON_URL = new URL('../../assets/limite_cdmx.geojson', import.meta.url).href;
+const MUNICIPIOS_GEOJSON_URL = new URL('../../assets/municipios.geojson', import.meta.url).href;
 
 const VECTOR_STYLE = 'https://tiles.openfreemap.org/styles/fiord';
 
@@ -12,6 +13,7 @@ interface MapViewProps {
   colonias: Colonia[];
   onColoniaClick?: (colonia: Colonia) => void;
   selectedCP?: string;
+  selectionTrigger?: number;
 }
 
 // Direct mapping: bajo=red, medio=yellow, alto=green
@@ -30,14 +32,57 @@ const BADGE_COLORS: Record<string, string> = {
   sin_datos: "#9ca3af",
 };
 
-function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
+function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const popupRef = useRef<maplibregl.Popup | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [hoveredCP, setHoveredCP] = useState<string | null>(null);
   const coloniasByCP = useRef<Map<string, Colonia>>(new Map());
   const polygonDataRef = useRef<GeoJSON.FeatureCollection | null>(null);
+
+  const openColoniaPopup = (
+    cp: string,
+    colonia: Colonia | undefined,
+    lngLat: maplibregl.LngLatLike,
+  ) => {
+    if (!map.current) return;
+
+    const cat = (colonia?.categoria_riesgo || "sin_datos") as Colonia["categoria_riesgo"];
+    const color = BADGE_COLORS[cat] || "#6b7280";
+    const cumplLabel =
+      cat === "alto"
+        ? "Mejor cumplimiento"
+        : cat === "medio"
+          ? "Equidad PROMEDIO"
+          : cat === "sin_datos"
+            ? "SIN DATOS"
+            : "Equidad BAJA";
+
+    popupRef.current?.remove();
+    popupRef.current = new maplibregl.Popup({
+      offset: 15,
+      closeButton: true,
+      closeOnClick: true,
+    })
+      .setLngLat(lngLat)
+      .setHTML(
+        `
+          <div style="padding:16px;min-width:200px;font-family:system-ui,sans-serif">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <div style="width:12px;height:12px;border-radius:50%;background:${color}"></div>
+              <h3 style="margin:0;font-size:18px;font-weight:700;color:#111827">CP ${cp}</h3>
+            </div>
+            <p style="margin:0 0 12px;font-size:13px;color:#6b7280">${colonia?.municipio || ""}, ${colonia?.estado || ""}</p>
+            <span style="display:inline-block;padding:5px 14px;border-radius:4px;font-size:12px;font-weight:700;color:white;background:${color};text-transform:uppercase">
+              ${cumplLabel}
+            </span>
+          </div>
+        `,
+      )
+      .addTo(map.current);
+  };
 
   useEffect(() => {
     const lookup = new Map<string, Colonia>();
@@ -84,6 +129,36 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
           data: perimeterData,
         });
 
+        const municipiosResponse = await fetch(MUNICIPIOS_GEOJSON_URL);
+        if (!municipiosResponse.ok)
+          throw new Error(`Error loading municipios data: ${municipiosResponse.status}`);
+        const municipiosData = await municipiosResponse.json();
+
+        map.current!.addSource("municipios", {
+          type: "geojson",
+          data: municipiosData,
+        });
+
+        map.current!.addLayer({
+          id: "municipios-fill",
+          type: "fill",
+          source: "municipios",
+          paint: {
+            "fill-color": "rgba(135, 206, 235, 0.08)",
+            "fill-outline-color": "rgba(59, 130, 246, 0.22)",
+          },
+        });
+
+        map.current!.addLayer({
+          id: "municipios-line",
+          type: "line",
+          source: "municipios",
+          paint: {
+            "line-color": "rgba(59, 130, 246, 0.28)",
+            "line-width": 1,
+          },
+        });
+
         map.current!.addLayer({
           id: "cdmx-perimeter-fill",
           type: "fill",
@@ -118,6 +193,8 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
     );
 
     return () => {
+      popupRef.current?.remove();
+      popupRef.current = null;
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -289,8 +366,6 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       }
     });
 
-    let activePopup: maplibregl.Popup | null = null;
-
     map.current.on("click", "polygons-fill", (e) => {
       if (!e.features?.length) return;
       const cp = String(e.features[0].properties?.codigo_postal);
@@ -298,57 +373,82 @@ function MapView({ colonias, onColoniaClick, selectedCP }: MapViewProps) {
       const colonia = coloniasByCP.current.get(cp);
       if (colonia && onColoniaClick) onColoniaClick(colonia);
 
-      const cat = (colonia?.categoria_riesgo || "sin_datos") as Colonia['categoria_riesgo'];
-      const color = BADGE_COLORS[cat] || "#6b7280";
-      const cumplLabel =
-        cat === "alto"
-          ? "Mejor cumplimiento"
-          : cat === "medio"
-            ? "Equidad PROMEDIO"
-            : cat === "sin_datos"
-              ? "SIN DATOS"
-              : "Equidad BAJA";
-
-      // Close previous popup
-      if (activePopup) {
-        activePopup.remove();
-        activePopup = null;
-      }
-
-      activePopup = new maplibregl.Popup({
-        offset: 15,
-        closeButton: true,
-        closeOnClick: true,
-      })
-        .setLngLat(e.lngLat)
-        .setHTML(
-          `
-          <div style="padding:16px;min-width:200px;font-family:system-ui,sans-serif">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-              <div style="width:12px;height:12px;border-radius:50%;background:${color}"></div>
-              <h3 style="margin:0;font-size:18px;font-weight:700;color:#111827">CP ${cp}</h3>
-            </div>
-            <p style="margin:0 0 12px;font-size:13px;color:#6b7280">${colonia?.municipio || ""}, ${colonia?.estado || ""}</p>
-            <span style="display:inline-block;padding:5px 14px;border-radius:4px;font-size:12px;font-weight:700;color:white;background:${color};text-transform:uppercase">
-              ${cumplLabel}
-            </span>
-          </div>
-        `,
-        )
-        .addTo(map.current!);
+      openColoniaPopup(cp, colonia, e.lngLat);
     });
   }, [mapReady, colonias, onColoniaClick]);
 
   useEffect(() => {
-    if (!isLoaded || !map.current || !selectedCP) return;
+    if (!isLoaded || !map.current) return;
+
+    if (!selectedCP) {
+      popupRef.current?.remove();
+      popupRef.current = null;
+      return;
+    }
+
     const c = colonias.find((c) => c.codigo_postal === selectedCP);
-    if (c?.latitud && c?.longitud)
+    const getPolygonCenter = (cp: string): [number, number] | null => {
+      const feature = polygonDataRef.current?.features.find(
+        (item) => String(item.properties?.codigo_postal ?? "").padStart(5, "0") === cp,
+      );
+
+      if (!feature) return null;
+
+      let minLng = Infinity;
+      let minLat = Infinity;
+      let maxLng = -Infinity;
+      let maxLat = -Infinity;
+
+      const visitCoordinates = (coordinates: unknown) => {
+        if (!Array.isArray(coordinates)) return;
+
+        if (
+          coordinates.length >= 2 &&
+          typeof coordinates[0] === "number" &&
+          typeof coordinates[1] === "number"
+        ) {
+          const lng = coordinates[0];
+          const lat = coordinates[1];
+          minLng = Math.min(minLng, lng);
+          minLat = Math.min(minLat, lat);
+          maxLng = Math.max(maxLng, lng);
+          maxLat = Math.max(maxLat, lat);
+          return;
+        }
+
+        coordinates.forEach(visitCoordinates);
+      };
+
+      const visitGeometry = (geometry?: GeoJSON.Geometry) => {
+        if (!geometry) return;
+        if (geometry.type === "GeometryCollection") {
+          geometry.geometries.forEach(visitGeometry);
+          return;
+        }
+        visitCoordinates(geometry.coordinates);
+      };
+
+      visitGeometry(feature.geometry ?? undefined);
+
+      if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) return null;
+
+      return [(minLng + maxLng) / 2, (minLat + maxLat) / 2];
+    };
+
+    const lngLat =
+      c && Number.isFinite(c.longitud) && Number.isFinite(c.latitud)
+        ? [c.longitud, c.latitud] as [number, number]
+        : getPolygonCenter(selectedCP);
+
+    if (lngLat) {
       map.current.flyTo({
-        center: [c.longitud, c.latitud],
-        zoom: 14,
+        center: lngLat,
+        zoom: 12.5,
         duration: 1500,
       });
-  }, [selectedCP, isLoaded, colonias]);
+      openColoniaPopup(selectedCP, c, lngLat);
+    }
+  }, [selectedCP, selectionTrigger, isLoaded, colonias]);
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
