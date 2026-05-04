@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import AppLayout from './components/Layout/AppLayout.tsx';
 import Home from './pages/Home.tsx';
 import MapExplorer from './pages/MapExplorer.tsx';
@@ -11,20 +13,24 @@ import Methodology from './pages/Methodology.tsx';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/map" element={<MapExplorer />} />
-          <Route path="/quiz" element={<Quiz />} />
-          <Route path="/quiz/resultado" element={<QuizResult />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/recomendaciones" element={<Recommendations />} />
-          <Route path="/resources" element={<Resources />} />
-          <Route path="/metodologia" element={<Methodology />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/map" element={<MapExplorer />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/quiz/resultado" element={<QuizResult />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/recomendaciones" element={<Recommendations />} />
+            <Route path="/resources" element={<Resources />} />
+            <Route path="/metodologia" element={<Methodology />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+      <Analytics />
+      <SpeedInsights />
+    </>
   );
 }
 
