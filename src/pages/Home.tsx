@@ -318,7 +318,7 @@ export default function Home() {
         </div>
 
         <p className="hp-desc">
-          Descubre como se ve la calidad del aire, la salud colectiva y el acceso a servicios públicos en la CDMX y el área Metropolitana.
+          Descubre cómo se ve la calidad del aire, la salud colectiva y el acceso a servicios públicos en la CDMX y el área Metropolitana.
         </p>
 
         <div className="hp-ctas">
