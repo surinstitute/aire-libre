@@ -473,6 +473,11 @@ function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0 }:
       <style>{`
         .maplibregl-popup-content { padding:0!important; border-radius:12px!important; box-shadow:0 10px 40px rgba(0,0,0,0.2)!important; }
         .maplibregl-popup-close-button { font-size:18px; padding:8px 12px; color:#9ca3af; }
+        @media (max-width: 768px) {
+          .maplibregl-popup {
+            display: none !important;
+          }
+        }
       `}</style>
     </div>
   );

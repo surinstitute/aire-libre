@@ -89,7 +89,7 @@ export default function MapExplorer() {
   const toggle = (k: string) => setTip(tip === k ? null : k);
 
   if (loading) return (
-    <div style={{ width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, background: 'linear-gradient(170deg, #9DD0F3 0%, #7CB9E2 50%, #5A9FCC 100%)' }}>
+    <div style={{ width: '100%', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, background: 'linear-gradient(170deg, #9DD0F3 0%, #7CB9E2 50%, #5A9FCC 100%)' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ width: 48, height: 48, border: '4px solid rgba(255,255,255,0.2)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
       <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', fontFamily: "'Space Mono', monospace", letterSpacing: '1px' }}>Cargando mapa...</div>
@@ -99,7 +99,7 @@ export default function MapExplorer() {
   const cat = selected?.categoria_riesgo || 'medio';
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: '100dvh', position: 'relative', overflow: 'hidden' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
 
@@ -174,7 +174,7 @@ export default function MapExplorer() {
           width: 100%; height: 100%; padding-top: 66px;
         }
         @media (max-width: 768px) {
-          .me-map-container { padding-top: 110px; }
+          .me-map-container { padding-top: 110px; height: 100dvh; }
         }
         .me-filters-fab {
           display: none;
@@ -215,6 +215,20 @@ export default function MapExplorer() {
             width: 100%;
             margin-bottom: 4px;
             font-size: 12px !important;
+          }
+
+          .me-info {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 108px;
+            width: 100%;
+            max-width: none;
+            max-height: none;
+            border-radius: 18px 18px 0 0;
+            box-shadow: 0 -10px 32px rgba(0,0,0,0.24);
+            z-index: 30;
           }
 
           /* FAB for filters */
