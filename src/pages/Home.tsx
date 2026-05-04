@@ -82,11 +82,25 @@ export default function Home() {
           top: 24%;
           z-index: 3;
           letter-spacing: 2px;
+          display: inline-block;
           opacity: 0;
           transform: translateX(50px);
           transition: opacity 0.9s ease 0.25s, transform 0.9s cubic-bezier(0.16,1,0.3,1) 0.25s;
         }
         .hp--in .hp-title--libre { opacity: 1; transform: translateX(0); }
+
+        .hp-title-beta {
+          display: inline-block;
+          margin-left: 0.08em;
+          font-family: 'Space Mono', monospace;
+          font-size: 0.1em;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          line-height: 1;
+          text-transform: none;
+          vertical-align: super;
+          transform: translateY(-4em);
+        }
 
         .hp-model {
           position: absolute;
@@ -205,6 +219,12 @@ export default function Home() {
             top: auto;
           }
 
+          .hp-title-beta {
+            margin-left: 0.1em;
+            font-size: 0.22em;
+            transform: translateY(-1em);
+          }
+
           /* Model — centered, no overlap */
           .hp-model {
             position: relative;
@@ -267,7 +287,10 @@ export default function Home() {
         {/* Mobile: titles in a row wrapper; Desktop: absolute positioned */}
         <div className="hp-titles-row">
           <h1 className="hp-title hp-title--aire">AIRE</h1>
-          <h1 className="hp-title hp-title--libre">LIBRE</h1>
+          <h1 className="hp-title hp-title--libre">
+            LIBRE
+            <span className="hp-title-beta">(Beta)</span>
+          </h1>
         </div>
 
         <div className="hp-model">
