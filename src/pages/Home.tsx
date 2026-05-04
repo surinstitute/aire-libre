@@ -295,9 +295,7 @@ export default function Home() {
         </div>
 
         <p className="hp-desc">
-          Descubre como el aire, la salud y<br />
-          el acceso a servicios indican<br />
-          dónde el riesgo se acumula.
+          Descubre como se ve la calidad del aire, la salud colectiva y el acceso a servicios públicos en la CDMX y el área Metropolitana.
         </p>
 
         <div className="hp-ctas">
@@ -305,12 +303,10 @@ export default function Home() {
           <button className="hp-btn" onClick={() => navigate('/quiz')}>Hacer test</button>
         </div>
 
-        <p className="hp-tagline">Conoce tu nivel de riesgo en diferentes puntos de la ciudad</p>
+        <p className="hp-tagline">Conoce tu nivel de equidad y resiliencia a lo largo de la ciudad</p>
 
         <p className="hp-quote">
-          Porque vivir bajo el mismo<br />
-          cielo no significa estar<br />
-          igual de protegidos.
+          Porque vivir bajo el mismo cielo no significa tener la misma protección.
         </p>
       </div>
     </div>
