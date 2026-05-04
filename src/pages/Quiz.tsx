@@ -197,6 +197,23 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center' as const,
     transition: 'all 0.3s ease',
   },
+  cpMapLink: {
+    display: 'block',
+    marginTop: '14px',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    fontSize: '12px',
+    fontWeight: 700,
+    color: C.white,
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    textUnderlineOffset: '3px',
+    opacity: 0.8,
+    fontFamily: "'Space Mono', monospace",
+  },
   footer: {
     position: 'fixed',
     bottom: 0, left: 0, right: 0,
@@ -475,6 +492,10 @@ const Quiz: React.FC = () => {
       setScreen('welcome');
     }
   };
+
+  const goToMap = useCallback(() => {
+    navigate('/map');
+  }, [navigate]);
 
   const startQuiz = useCallback(() => {
     setScreen('blockIntro');
@@ -848,17 +869,28 @@ const Quiz: React.FC = () => {
                   <span style={styles.inputSuffix}>{currentQuestion.suffix}</span>
                 )}
                 {currentQuestion.id === 'codigoPostal' && (
-                  <div style={styles.cpStatus}>
-                    {cpLoading && <span style={{ color: C.dimmed }}>Buscando tu zona...</span>}
-                    {cpColonia && !cpLoading && (
-                      <span style={{ color: C.success }}>✓ {cpColonia.colonias}, {cpColonia.municipio}</span>
-                    )}
-                    {cpError && !cpLoading && (
-                      <span style={{ color: C.error }}>
-                        No encontramos ese código postal. Intenta con otro.
-                      </span>
-                    )}
-                  </div>
+                  <>
+                    <div style={styles.cpStatus}>
+                      {cpLoading && <span style={{ color: C.dimmed }}>Buscando tu zona...</span>}
+                      {cpColonia && !cpLoading && (
+                        <span style={{ color: C.success }}>✓ {cpColonia.colonias}, {cpColonia.municipio}</span>
+                      )}
+                      {cpError && !cpLoading && (
+                        <span style={{ color: C.error }}>
+                          No encontramos ese código postal. Intenta con otro.
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      style={styles.cpMapLink}
+                      onClick={goToMap}
+                      onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                    >
+                      ¿No conoces tu CP? Ve al mapa
+                    </button>
+                  </>
                 )}
                 {answered && (
                   <p style={styles.enterHint}>

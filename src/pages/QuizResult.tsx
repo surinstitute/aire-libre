@@ -51,6 +51,13 @@ const slidePalettes = [
 ];
 type Palette = (typeof slidePalettes)[0];
 
+const COMPLIANCE_PALETTES: Record<string, Palette> = {
+  alto: { bg: '#2D4A3E', text: '#F5F0E8', accent: '#86efac' },
+  medio: { bg: '#8A5A14', text: '#F5F0E8', accent: '#fcd34d' },
+  bajo: { bg: '#A62C2B', text: '#F5F0E8', accent: '#fca5a5' },
+  sin_datos: { bg: '#4B5563', text: '#F5F0E8', accent: '#D1D5DB' },
+};
+
 // ============================================================
 // Fade-in
 // ============================================================
@@ -232,6 +239,12 @@ function generateSlideShareImage(data: SlideShareData): Promise<Blob | null> {
       roundRect(ctx, barX, y, barW * ((data.individuoRaw ?? 0) / 7), barH, 6);
       ctx.fill();
       y += 40;
+
+      ctx.font = '12px Space Mono, monospace';
+      ctx.fillStyle = dim;
+      ctx.textAlign = 'center';
+      ctx.fillText('Menor puntaje = mejor resultado', W / 2, y + 10);
+      y += 26;
     }
 
     // Separator
@@ -472,7 +485,7 @@ const QuizResult: React.FC = () => {
     });
 
     // 2 — Código postal
-    const p1 = slidePalettes[1];
+    const p1 = COMPLIANCE_PALETTES[cpRiskLevel] ?? slidePalettes[1];
     out.push({
       palette: p1,
       shareData: { slideIndex: 1, palette: p1, title: `CP ${answers.codigoPostal || '—'}`, bigText: String(answers.codigoPostal || '—'), body: colonia ? `Vives en ${colonia.colonias}, ${colonia.municipio}. ${cumplDesc}` : cumplLabel, badgeText: cumplLabel, badgeColor: cumplColor },
@@ -615,6 +628,9 @@ const QuizResult: React.FC = () => {
             <div style={{ marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}><span style={{ color: AXIS_COLORS.individuo.text, fontWeight: 700 }}>Individuo</span><span style={{ opacity: 0.6 }}>{individuoLabel} ({result.individuo.raw}/7)</span></div>
               <div style={s(pF).bar}><div style={{ ...s(pF).barFill, backgroundColor: AXIS_COLORS.individuo.solid, width: `${(result.individuo.raw / 7) * 100}%` }} /></div>
+            </div>
+            <div style={{ fontSize: '11px', opacity: 0.65, marginTop: '-8px', marginBottom: '20px' }}>
+              Menor puntaje = mejor resultado
             </div>
           </FadeIn>
           <FadeIn delay={600}>
