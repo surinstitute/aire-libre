@@ -1,1 +1,12 @@
-{"rewrites":[{"source":"/(.*)", "destination":"/"}]}
+{
+	"rewrites": [
+		{
+			"source": "/_vercel/(.*)",
+			"destination": "/_vercel/$1"
+		},
+		{
+			"source": "/(.*)",
+			"destination": "/"
+		}
+	]
+}
