@@ -42,7 +42,6 @@ export default function MapExplorer() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [allColonias, setAllColonias] = useState<Colonia[]>([]);
-  const [coloniasFiltradas, setColoniasFiltradas] = useState<Colonia[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Colonia | null>(null);
   const [searchCP, setSearchCP] = useState('');
@@ -52,6 +51,7 @@ export default function MapExplorer() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectionTrigger, setSelectionTrigger] = useState(0);
+  const [mapAssetsReady, setMapAssetsReady] = useState(false);
 
   // Detect mobile
   useEffect(() => {
@@ -61,10 +61,11 @@ export default function MapExplorer() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  useEffect(() => { coloniaService.getAllColonias().then(d => { setAllColonias(d); setColoniasFiltradas(d); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  useEffect(() => { coloniaService.getAllColonias().then(d => { setAllColonias(d); setLoading(false); }).catch(() => setLoading(false)); }, []);
   useEffect(() => { const cp = searchParams.get('cp'); if (cp && allColonias.length) coloniaService.getColoniaByCP(cp).then(c => { if (c) { setSelected(c); setSearchCP(cp); setSelectionTrigger(t => t + 1); } }); }, [allColonias, searchParams]);
-  useEffect(() => { setColoniasFiltradas(filtro === 'todos' ? allColonias : allColonias.filter(c => c.categoria_riesgo === filtro)); }, [filtro, allColonias]);
   useEffect(() => { if (!loading && !isMobile) { const t = setTimeout(() => setShowBird(true), 3000); return () => clearTimeout(t); } }, [loading, isMobile]);
+
+  const coloniasFiltradas = filtro === 'todos' ? allColonias : allColonias.filter(c => c.categoria_riesgo === filtro);
 
   const search = async (rawCP = searchCP) => {
     const cp = rawCP.trim();
@@ -171,7 +172,7 @@ export default function MapExplorer() {
         }
 
         .me-map-container {
-          width: 100%; height: 100%; padding-top: 66px;
+          width: 100%; height: 100%; padding-top: 66px; position: relative;
         }
         @media (max-width: 768px) {
           .me-map-container { padding-top: 110px; height: 100dvh; }
@@ -179,11 +180,51 @@ export default function MapExplorer() {
         .me-filters-fab {
           display: none;
         }
+        .me-map-loader {
+          position: absolute;
+          inset: 66px 0 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(180deg, rgba(124,185,226,0.3) 0%, rgba(255,255,255,0.72) 100%);
+          backdrop-filter: blur(6px);
+          z-index: 9;
+          transition: opacity 220ms ease;
+        }
+        .me-map-loader-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          padding: 18px 22px;
+          border-radius: 14px;
+          background: rgba(255,255,255,0.82);
+          box-shadow: 0 12px 30px rgba(31, 41, 55, 0.14);
+          border: 1px solid rgba(106, 173, 218, 0.28);
+        }
+        .me-map-loader-spinner {
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          border: 4px solid rgba(90,159,204,0.18);
+          border-top-color: #5A9FCC;
+          animation: spin 1s linear infinite;
+        }
+        .me-map-loader-text {
+          font-size: 12px;
+          color: #37556b;
+          font-family: 'Space Mono', monospace;
+          letter-spacing: 0.6px;
+          text-transform: uppercase;
+        }
 
         /* ── Mobile ── */
         @media (max-width: 768px) {
           .me-header {
             flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 16px;
+          }
+          .me-map-loader {
+            inset: 110px 0 0;
           }
           .me-header-title h1 { font-size: 18px; }
           .me-header-title p { font-size: 10px; display: block; }
@@ -291,7 +332,21 @@ export default function MapExplorer() {
 
       {/* Map */}
       <div className="me-map-container">
-        <MapView colonias={coloniasFiltradas} onColoniaClick={setSelected} selectedCP={selected?.codigo_postal} selectionTrigger={selectionTrigger} />
+        <MapView
+          colonias={coloniasFiltradas}
+          onColoniaClick={setSelected}
+          selectedCP={selected?.codigo_postal}
+          selectionTrigger={selectionTrigger}
+          onAssetsReadyChange={setMapAssetsReady}
+        />
+        {!mapAssetsReady && (
+          <div className="me-map-loader" aria-live="polite" aria-busy="true">
+            <div className="me-map-loader-card">
+              <div className="me-map-loader-spinner" />
+              <div className="me-map-loader-text">Cargando capas del mapa...</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bird — desktop only (hidden on mobile via CSS) */}

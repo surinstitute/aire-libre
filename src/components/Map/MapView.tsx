@@ -14,6 +14,7 @@ interface MapViewProps {
   onColoniaClick?: (colonia: Colonia) => void;
   selectedCP?: string;
   selectionTrigger?: number;
+  onAssetsReadyChange?: (ready: boolean) => void;
 }
 
 // Direct mapping: bajo=red, medio=yellow, alto=green
@@ -32,7 +33,7 @@ const BADGE_COLORS: Record<string, string> = {
   sin_datos: "#9ca3af",
 };
 
-function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0 }: MapViewProps) {
+function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0, onAssetsReadyChange }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
@@ -53,7 +54,7 @@ function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0 }:
     const color = BADGE_COLORS[cat] || "#6b7280";
     const cumplLabel =
       cat === "alto"
-        ? "Mejor cumplimiento"
+        ? "Mejor Equidad"
         : cat === "medio"
           ? "Equidad PROMEDIO"
           : cat === "sin_datos"
@@ -92,6 +93,8 @@ function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0 }:
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return;
+
+    onAssetsReadyChange?.(false);
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
@@ -184,6 +187,7 @@ function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0 }:
       }
 
       setMapReady(true);
+      onAssetsReadyChange?.(true);
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), "top-right");
@@ -193,6 +197,7 @@ function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0 }:
     );
 
     return () => {
+      onAssetsReadyChange?.(false);
       popupRef.current?.remove();
       popupRef.current = null;
       if (map.current) {
@@ -200,7 +205,7 @@ function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0 }:
         map.current = null;
       }
     };
-  }, []);
+  }, [onAssetsReadyChange]);
 
   useEffect(() => {
     if (
