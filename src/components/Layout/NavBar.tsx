@@ -12,6 +12,7 @@ const NAV = [
   { label: 'TEST', route: '/quiz' },
   { label: 'PREGUNTAS RELACIONADAS', route: '/faq' },
   { label: '¿QUÉ HAGO?', route: '/recomendaciones' },
+  { label: 'GLOSARIO', route: '/glosario' },
   { label: 'METODOLOGÍA', route: '/metodologia' },
 ];
 
@@ -214,6 +215,7 @@ export default function NavBar({ variant = 'transparent' }: NavBarProps) {
           .nb-overlay--open .nb-overlay-btn:nth-child(3) { transition-delay: 0.20s; }
           .nb-overlay--open .nb-overlay-btn:nth-child(4) { transition-delay: 0.26s; }
           .nb-overlay--open .nb-overlay-btn:nth-child(5) { transition-delay: 0.32s; }
+          .nb-overlay--open .nb-overlay-btn:nth-child(6) { transition-delay: 0.38s; }
           .nb-overlay-btn:active { opacity: 1; }
 
           .nb-overlay-logos {
