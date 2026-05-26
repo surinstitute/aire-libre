@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { quizQuestions } from '../data/quizData';
 import { coloniaService } from '../services/coloniaService';
 import type { QuizAnswers } from '../data/quizData';
@@ -283,7 +283,19 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: C.dimmed,
     fontStyle: 'italic',
+    marginBottom: '16px',
+  },
+  welcomePrivacyNote: {
+    fontSize: '12px',
+    color: 'rgba(255,255,255,0.72)',
+    lineHeight: 1.7,
+    maxWidth: '460px',
     marginBottom: '40px',
+  },
+  welcomePrivacyLink: {
+    color: C.white,
+    textDecoration: 'underline',
+    textUnderlineOffset: '3px',
   },
   btnStart: {
     padding: '14px 44px',
@@ -568,8 +580,15 @@ const Quiz: React.FC = () => {
                 vida.
               </p>
               <p style={styles.welcomeDisclaimer}>
-                No es un diagnóstico médico. Tus respuestas son anónimas y esta
-                información no será almacenada.
+                No es un diagnóstico médico.
+              </p>
+              <p style={styles.welcomePrivacyNote}>
+                Los datos del test se tratan únicamente en tu navegador y se usan solo para generar
+                tu resultado durante esta sesión. Puedes consultar más detalle en nuestra{' '}
+                <Link to="/privacy" style={styles.welcomePrivacyLink}>
+                  política de privacidad
+                </Link>
+                .
               </p>
               <button
                 style={styles.btnStart}

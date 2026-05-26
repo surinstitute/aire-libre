@@ -14,6 +14,8 @@
     "@fontsource/lora": "^5.2.8",
     "@fontsource/playfair-display": "^5.2.8",
     "@fontsource/space-mono": "^5.2.9",
+    "@iconify-icons/simple-icons": "^1.2.74",
+    "@iconify/react": "^6.0.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
     "@vercel/analytics": "^2.0.1",

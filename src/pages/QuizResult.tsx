@@ -1,4 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
+import { Icon } from '@iconify/react';
+import xIcon from '@iconify-icons/simple-icons/x';
+import facebookIcon from '@iconify-icons/simple-icons/facebook';
+import instagramIcon from '@iconify-icons/simple-icons/instagram';
+import linkedinIcon from '@iconify-icons/simple-icons/linkedin';
 import { useNavigate } from 'react-router-dom';
 import {
   calculateResult,
@@ -359,6 +364,14 @@ function shareToFacebook() {
   );
 }
 
+function shareToLinkedIn() {
+  window.open(
+    `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${SITE_URL}/quiz`)}`,
+    '_blank',
+    'width=720,height=640'
+  );
+}
+
 // ============================================================
 // Style helper
 // ============================================================
@@ -394,7 +407,7 @@ const s = (p: Palette) => ({
     backdropFilter: 'blur(8px)', transition: 'all 0.25s ease', zIndex: 100,
   },
   cta: { padding: '14px 36px', fontSize: '13px', fontWeight: 700, fontFamily: "'Space Mono', monospace", color: p.bg, backgroundColor: p.accent, border: 'none', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.3s ease', letterSpacing: '0.5px' },
-  shareBtn: { padding: '10px 18px', fontSize: '12px', fontWeight: 700, fontFamily: "'Space Mono', monospace", color: p.text, backgroundColor: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.25s ease', backdropFilter: 'blur(8px)' },
+  shareBtn: { padding: '10px 18px', fontSize: '12px', fontWeight: 700, fontFamily: "'Space Mono', monospace", color: p.text, backgroundColor: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.25s ease', backdropFilter: 'blur(8px)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
   shareBtnPrimary: { padding: '12px 24px', fontSize: '13px', fontWeight: 700, fontFamily: "'Space Mono', monospace", color: p.bg, backgroundColor: p.accent, border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.25s ease' },
   shareSmall: { padding: '8px 16px', fontSize: '11px', fontWeight: 700, fontFamily: "'Space Mono', monospace", color: p.text, backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.25s ease', opacity: 0.7 },
 });
@@ -446,6 +459,19 @@ const QuizResult: React.FC = () => {
     const cp = answers.codigoPostal as string;
     navigate(cp ? `/map?cp=${encodeURIComponent(cp)}` : '/map');
   }, [answers, navigate]);
+
+  const shareSlideAsset = useCallback(async (baseShareData: SlideShareData, channel: 'general' | 'instagram' = 'general') => {
+    setShareStatus('Generando imagen...');
+    const shareData = { ...baseShareData };
+    if (shareData.birdEmoji && birdSnapshotFn.current) {
+      shareData.birdImageUrl = birdSnapshotFn.current();
+    }
+    const status = await shareSlideAsImage(shareData, result.bird);
+    if (status === 'shared') setShareStatus(channel === 'instagram' ? 'Abierto para compartir en Instagram' : '¡Compartido!');
+    else if (status === 'downloaded') setShareStatus(channel === 'instagram' ? '¡Imagen lista para Instagram!' : '¡Imagen descargada!');
+    else setShareStatus('Error al generar imagen');
+    setTimeout(() => setShareStatus(null), 3000);
+  }, [result]);
 
   // ── Build slides ──
   const slides: SlideData[] = useMemo(() => {
@@ -605,9 +631,20 @@ const QuizResult: React.FC = () => {
 
     // 8 — FINAL
     const pF = slidePalettes[7];
+    const finalShareData: SlideShareData = {
+      slideIndex: 7,
+      palette: pF,
+      title: result.bird.name,
+      body: 'Ante la crisis de aire, NO TE QUEDES EN LAS NUBES. Sal y construyamos un cambio.',
+      birdEmoji: result.bird.emoji,
+      contextoLabel,
+      contextoRaw: result.contexto.raw,
+      individuoLabel,
+      individuoRaw: result.individuo.raw,
+    };
     out.push({
       palette: pF,
-      shareData: { slideIndex: 7, palette: pF, title: result.bird.name, body: 'Ante la crisis de aire, NO TE QUEDES EN LAS NUBES. Sal y construyamos un cambio.', birdEmoji: result.bird.emoji, contextoLabel, contextoRaw: result.contexto.raw, individuoLabel, individuoRaw: result.individuo.raw },
+      shareData: finalShareData,
       content: (
         <div style={{ textAlign: 'center', width: '100%', maxWidth: '500px' }}>
           <FadeIn delay={200}>
@@ -634,9 +671,20 @@ const QuizResult: React.FC = () => {
             </div>
           </FadeIn>
           <FadeIn delay={600}>
-            <p style={{ fontSize: '14px', lineHeight: 1.7, opacity: 0.75, marginBottom: '28px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: '14px', lineHeight: 1.7, opacity: 0.75, marginBottom: '14px' }}>
               Ante la crisis de aire, <span style={{ fontWeight: 700, color: pF.accent }}>NO TE QUEDES EN LAS NUBES</span>. Sal y construyamos un cambio.
-            </p>
+              </p>
+              <a
+                href="/recomendaciones"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: pF.text, backgroundColor: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.22)', borderRadius: '999px', padding: '10px 18px', textDecoration: 'none', fontFamily: "'Space Mono', monospace", marginBottom: '28px', boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
+              >
+                ¿Qué hago yo con todo esto?
+                <span style={{ color: pF.accent }}>→</span>
+              </a>
+            </div>
           </FadeIn>
           <FadeIn delay={700}><div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.12)', marginBottom: '24px' }} /></FadeIn>
           <FadeIn delay={800}>
@@ -645,10 +693,16 @@ const QuizResult: React.FC = () => {
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' as const }}>
                 <button style={s(pF).shareBtn} onClick={() => shareToTwitter(result.bird, result.total)}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}>𝕏 Twitter</button>
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}><Icon icon={xIcon} width="14" height="14" />Twitter</button>
                 <button style={s(pF).shareBtn} onClick={() => shareToFacebook()}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}>Facebook</button>
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}><Icon icon={facebookIcon} width="14" height="14" />Facebook</button>
+                <button style={s(pF).shareBtn} onClick={() => { void shareSlideAsset(finalShareData, 'instagram'); }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}><Icon icon={instagramIcon} width="14" height="14" />Instagram</button>
+                <button style={s(pF).shareBtn} onClick={() => shareToLinkedIn()}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}><Icon icon={linkedinIcon} width="14" height="14" />LinkedIn</button>
               </div>
             </div>
           </FadeIn>
@@ -658,23 +712,13 @@ const QuizResult: React.FC = () => {
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
               Explorar el mapa
             </button>
-            <div style={{ marginTop: '12px' }}>
-              <a
-                href="/recomendaciones"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: '12px', color: pF.accent, opacity: 0.7, textDecoration: 'underline', fontFamily: "'Space Mono', monospace" }}
-              >
-                ¿Qué hago yo con todo esto? →
-              </a>
-            </div>
           </FadeIn>
         </div>
       ),
     });
 
     return out;
-  }, [answers, result, dailyAir, dailyAirKg, cpRiskLevel, colonia, goToMap]);
+  }, [answers, result, dailyAir, dailyAirKg, cpRiskLevel, colonia, goToMap, shareSlideAsset]);
 
   const total = slides.length;
   const goTo = useCallback((i: number) => { if (i >= 0 && i < total) { setCurrentSlide(i); setAnimKey((k) => k + 1); setShareStatus(null); } }, [total]);
@@ -683,17 +727,8 @@ const QuizResult: React.FC = () => {
   const handleShareSlide = useCallback(async () => {
     const slide = slides[currentSlide];
     if (!slide) return;
-    setShareStatus('Generando imagen...');
-    const shareData = { ...slide.shareData };
-    if (shareData.birdEmoji && birdSnapshotFn.current) {
-      shareData.birdImageUrl = birdSnapshotFn.current();
-    }
-    const status = await shareSlideAsImage(shareData, result.bird);
-    if (status === 'shared') setShareStatus('¡Compartido!');
-    else if (status === 'downloaded') setShareStatus('¡Imagen descargada!');
-    else setShareStatus('Error al generar imagen');
-    setTimeout(() => setShareStatus(null), 3000);
-  }, [currentSlide, slides, result]);
+    await shareSlideAsset(slide.shareData, 'general');
+  }, [currentSlide, slides, shareSlideAsset]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
