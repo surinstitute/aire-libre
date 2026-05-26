@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import logoBC from '../../assets/Logo_BreatheCities.svg';
 
 // Replace these with the real profile URLs
@@ -79,6 +80,25 @@ export default function Footer() {
           color: rgba(255, 255, 255, 0.62);
           font-family: 'Space Mono', monospace;
         }
+        .footer-links {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 14px;
+          flex-wrap: wrap;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.68);
+        }
+        .footer-links a {
+          color: inherit;
+          text-decoration: none;
+          border-bottom: 1px solid transparent;
+          transition: color 0.2s ease, border-color 0.2s ease;
+        }
+        .footer-links a:hover {
+          color: #fff;
+          border-color: rgba(255, 255, 255, 0.55);
+        }
       `}</style>
 
       <footer className="footer">
@@ -134,6 +154,9 @@ export default function Footer() {
           Esta herramienta es de divulgación. No está diseñada para ofrecer
           orientación médica y puede contener errores u omisiones. Si tienes síntomas relacionados con la calidad del aire, consulta a un profesional de la salud.
         </p>
+        <div className="footer-links">
+          <Link to="/privacy">Política de privacidad</Link>
+        </div>
       </footer>
     </>
   );

@@ -11,6 +11,7 @@ import Recommendations from './pages/Recommendations.tsx';
 import Resources from './pages/Resources.tsx';
 import Methodology from './pages/Methodology.tsx';
 import Glossary from './pages/Glossary.tsx';
+import Privacy from './pages/Privacy.tsx';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/resources" element={<Resources />} />
             <Route path="/metodologia" element={<Methodology />} />
             <Route path="/glosario" element={<Glossary />} />
+            <Route path="/privacy" element={<Privacy />} />
           </Route>
         </Routes>
       </BrowserRouter>
