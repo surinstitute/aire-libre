@@ -4,6 +4,7 @@ import xIcon from '@iconify-icons/simple-icons/x';
 import facebookIcon from '@iconify-icons/simple-icons/facebook';
 import instagramIcon from '@iconify-icons/simple-icons/instagram';
 import linkedinIcon from '@iconify-icons/simple-icons/linkedin';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   calculateResult,
@@ -403,7 +404,7 @@ const s = (p: Palette) => ({
   arrow: {
     position: 'fixed' as const, top: '50%', transform: 'translateY(-50%)', width: '48px', height: '48px', borderRadius: '50%',
     border: '1.5px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)',
-    fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
     backdropFilter: 'blur(8px)', transition: 'all 0.25s ease', zIndex: 100,
   },
   cta: { padding: '14px 36px', fontSize: '13px', fontWeight: 700, fontFamily: "'Space Mono', monospace", color: p.bg, backgroundColor: p.accent, border: 'none', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.3s ease', letterSpacing: '0.5px' },
@@ -780,12 +781,16 @@ const QuizResult: React.FC = () => {
       {currentSlide > 0 && (
         <button className="qr-arrow qr-arrow--left" style={{ ...st.arrow, left: '16px' }} onClick={() => goTo(currentSlide - 1)}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}>‹</button>
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}>
+          <ChevronLeft size={20} strokeWidth={2.25} />
+        </button>
       )}
       {currentSlide < total - 1 && (
         <button className="qr-arrow qr-arrow--right" style={{ ...st.arrow, right: '16px' }} onClick={() => goTo(currentSlide + 1)}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}>›</button>
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}>
+          <ChevronRight size={20} strokeWidth={2.25} />
+        </button>
       )}
       <div style={st.dots}>
         {slides.map((_, i) => (
