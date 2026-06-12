@@ -140,7 +140,7 @@ export const quizQuestions: QuizQuestion[] = [
     blockTitle: '¿Qué tan fuerte es tu escudo?',
     question:
       '¿Qué tan fácil es para ti acceder a información sobre salud o medio ambiente?',
-    helpText: 'Alertas, recomendaciones, servicios.',
+    helpText: 'Boletines, recomendaciones, servicios.',
     type: 'single',
     options: [
       { label: 'Muy fácil', value: 'facil' },
@@ -397,7 +397,7 @@ export const birdProfiles: BirdProfile[] = [
   },
   {
     id: 'canario',
-    name: 'Canario en Alerta',
+    name: 'Canario Atento',
     emoji: '🐦',
     subtitle: 'Entorno exigente + cuerpo sensible',
     narrative:

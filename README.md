@@ -70,7 +70,7 @@ Desarrollado para el [Instituto del Sur Urbano](https://sur.institute) en colabo
 | 🕊️ Tortolita Luchona | Favorable/Moderado | Moderado/Resistente | Exposición moderada |
 | 🐦 Paloma Común | Moderado | Moderado | Vulnerabilidad biológica o exposición frecuente |
 | 🐦 Jilguero Cansado | Perjudicial | Resistente | Alta exposición estructural |
-| 🐦 Canario en Alerta | Perjudicial | Sensible | Entorno exigente + cuerpo sensible |
+| 🐦 Canario Atento | Perjudicial | Sensible | Entorno exigente + cuerpo sensible |
 
 ### Compartir resultados
 - Generación de imagen por slide con Canvas API
@@ -376,7 +376,7 @@ El proyecto usa modelos GLB con rig y animaciones (skinned mesh) cargados con Th
 | Bird + Frog | `Character_ANIMTimeline_05_GLB.glb` | Home, MapExplorer | ✅ Implementado |
 | Paloma | `Pigeon_Animations_01_glb.glb` | QuizResult (Paloma Común) | ✅ Implementado |
 | Gorrión | `Gorrion_ANIMS_glb.glb` | QuizResult (Gorrión Cantor) | ✅ Implementado |
-| Canario | `Canario_ANIMS_glb.glb` | QuizResult (Canario en Alerta) | ✅ Implementado |
+| Canario | `Canario_ANIMS_glb.glb` | QuizResult (Canario Atento) | ✅ Implementado |
 | Tortolita | `Tortolit_ANIMS_glb.glb` | QuizResult (Tortolita Luchona) | ✅ Implementado |
 | Jilguero | `Jilguero_ANIMS_glb.glb` | QuizResult (Jilguero Cansado) | ✅ Implementado |
 
