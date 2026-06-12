@@ -120,9 +120,17 @@ export default function Methodology() {
         }
         .meth-intro {
           font-size: 14px; line-height: 1.8; opacity: 0.9;
-          text-align: center; margin-bottom: 40px; max-width: 600px;
+          text-align: left; margin-bottom: 40px; max-width: 100%;
           margin-left: auto; margin-right: auto;
         }
+        .meth-intro p { margin: 0 0 12px; }
+        .meth-intro strong { color: #fff; }
+        .meth-intro ul,
+        .meth-intro ol {
+          margin: 0 0 16px 20px;
+          padding: 0;
+        }
+        .meth-intro li { margin-bottom: 8px; }
         .meth-section { margin-bottom: 32px; }
         .meth-section-title {
           font-family: 'Bebas Neue', sans-serif;
@@ -206,12 +214,43 @@ export default function Methodology() {
       <div className="meth-container">
         <h1 className="meth-title">Metodología</h1>
 
-        <p className="meth-intro">
-          Este mapa te muestra la ciudad desde el vuelo de un pájaro. Desde arriba,
-          el cielo parece el mismo para todos, pero no todos los barrios ofrecen el mismo resguardo.
-          Aquí se cruzan la calidad del aire, la salud y el acceso a servicios diversos para mostrar
-          dónde el riesgo se acumula y dónde hay más protección.
-        </p>
+        <h2 className="meth-section-title">Introducción</h2>
+
+        <div className="meth-intro">
+          <p>
+            <strong>Mapa Aire Libre</strong> busca mostrar de forma clara dónde la contaminación del aire,
+            la población vulnerable y las desigualdades sociales se cruzan, para que sea posible actuar
+            con mayor eficacia, proteger mejor la salud de las personas, y avanzar hacia ciudades más
+            justas, saludables y sostenibles.
+          </p>
+
+          <p><strong>¿Qué hace esta metodología?</strong></p>
+          <ul>
+            <li>Reúne información sobre calidad del aire, salud, condiciones sociales y cambio climático.</li>
+            <li>Ubica en el mapa las zonas donde las personas pueden estar más expuestas y/o ser más vulnerables.</li>
+            <li>Ayuda a que las autoridades, organizaciones y ciudadanos puedan priorizar acciones y recursos donde más se necesitan.</li>
+          </ul>
+
+          <p><strong>¿En qué se basa?</strong></p>
+          <ul>
+            <li>En la idea de que todas las personas tienen derecho a respirar aire limpio y a vivir en un entorno saludable.</li>
+            <li>En el análisis del riesgo, que considera tanto la contaminación del aire como las condiciones que hacen a algunas personas más propensas a sufrir sus efectos.</li>
+            <li>En datos oficiales y estudios reconocidos, como la Red Automática de Monitoreo Atmosférico, el Censo de Población y Vivienda, la Encuesta Nacional de Gastos e Ingresos de los Hogares, el Índice de Desigualdad Urbana, etc., organizados para compararlos a nivel territorial.</li>
+          </ul>
+
+          <p><strong>¿Por qué es útil?</strong></p>
+          <ul>
+            <li>Permite ver de manera sencilla dónde hay mayores desigualdades en salud ambiental.</li>
+            <li>Sirve para detectar qué zonas requieren atención prioritaria, especialmente donde viven niñas, niños, personas mayores u otros grupos vulnerables.</li>
+          </ul>
+
+          <p><strong>¿Qué lo hace diferente?</strong></p>
+          <ol>
+            <li>Combina en una sola herramienta temas de salud, aire, clima y desigualdad social.</li>
+            <li>Utiliza métodos técnicos sólidos para analizar la información y representarla en mapas.</li>
+            <li>Está pensado para apoyar decisiones públicas con enfoque de justicia ambiental.</li>
+          </ol>
+        </div>
 
         {/* Índice de Equidad */}
         <div className="meth-section">
