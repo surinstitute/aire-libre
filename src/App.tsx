@@ -12,6 +12,7 @@ import Resources from './pages/Resources.tsx';
 import Methodology from './pages/Methodology.tsx';
 import Glossary from './pages/Glossary.tsx';
 import Privacy from './pages/Privacy.tsx';
+import Characters from './pages/Characters.tsx';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/quiz/resultado" element={<QuizResult />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/recomendaciones" element={<Recommendations />} />
+            <Route path="/personajes" element={<Characters />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/metodologia" element={<Methodology />} />
             <Route path="/glosario" element={<Glossary />} />

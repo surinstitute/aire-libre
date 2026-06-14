@@ -10,6 +10,7 @@ interface NavBarProps {
 const NAV = [
   { label: 'MAPA', route: '/map' },
   { label: 'TEST', route: '/quiz' },
+  { label: 'PERSONAJES', route: '/personajes' },
   { label: 'PREGUNTAS RELACIONADAS', route: '/faq' },
   { label: '¿QUÉ HAGO?', route: '/recomendaciones' },
   { label: 'GLOSARIO', route: '/glosario' },
@@ -216,6 +217,7 @@ export default function NavBar({ variant = 'transparent' }: NavBarProps) {
           .nb-overlay--open .nb-overlay-btn:nth-child(4) { transition-delay: 0.26s; }
           .nb-overlay--open .nb-overlay-btn:nth-child(5) { transition-delay: 0.32s; }
           .nb-overlay--open .nb-overlay-btn:nth-child(6) { transition-delay: 0.38s; }
+          .nb-overlay--open .nb-overlay-btn:nth-child(7) { transition-delay: 0.44s; }
           .nb-overlay-btn:active { opacity: 1; }
 
           .nb-overlay-logos {
