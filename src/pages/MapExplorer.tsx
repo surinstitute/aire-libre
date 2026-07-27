@@ -208,7 +208,10 @@ export default function MapExplorer() {
           border-radius: 50%;
           border: 4px solid rgba(90,159,204,0.18);
           border-top-color: #5A9FCC;
-          animation: spin 1s linear infinite;
+          animation: me-map-loader-spin 1s linear infinite;
+        }
+        @keyframes me-map-loader-spin {
+          to { transform: rotate(360deg); }
         }
         .me-map-loader-text {
           font-size: 12px;
@@ -318,13 +321,21 @@ export default function MapExplorer() {
       {/* Filters */}
       <div className={`me-filters ${filtersOpen || !isMobile ? '' : ''} ${isMobile && filtersOpen ? 'me-filters--open' : ''}`}
         style={!isMobile ? {} : (filtersOpen ? {} : { display: 'none' })}>
-        <div className="me-filters-label" style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4, fontFamily: "'Space Mono', monospace", letterSpacing: '0.5px' }}>
-          Nivel de equidad y resiliencia
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <div className="me-filters-label" style={{ fontSize: 11, fontWeight: 700, color: '#374151', fontFamily: "'Space Mono', monospace", letterSpacing: '0.5px' }}>
+            Nivel de equidad y resiliencia
+          </div>
+          <button type="button" aria-label="Ver nota sobre los rangos" aria-expanded={tip === 'nota_rangos'} onClick={() => setTip(tip === 'nota_rangos' ? null : 'nota_rangos')} style={{ width: 18, height: 18, borderRadius: 4, border: 'none', backgroundColor: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 700, flexShrink: 0, fontFamily: "'Space Mono', monospace" }}>i</button>
         </div>
+        {tip === 'nota_rangos' && (
+          <div role="tooltip" style={{ padding: '8px 10px', marginBottom: 4, borderRadius: 4, backgroundColor: '#eff6ff', color: '#1e3a5f', fontSize: 10, lineHeight: 1.5, fontFamily: "'Space Mono', monospace" }}>
+            Los rangos se redondearon para simplificar su presentación.
+          </div>
+        )}
         <FBtn label="Todos los CP" n={cnt('todos')} on={filtro === 'todos'} c="#6b7280" click={() => { setFiltro('todos'); if (isMobile) setFiltersOpen(false); }} />
-        <FBtn label="Mejor" n={cnt('alto')} on={filtro === 'alto'} c="#4ade80" click={() => { setFiltro('alto'); if (isMobile) setFiltersOpen(false); }} />
-        <FBtn label="Promedio" n={cnt('medio')} on={filtro === 'medio'} c="#fbbf24" click={() => { setFiltro('medio'); if (isMobile) setFiltersOpen(false); }} />
-        <FBtn label="Bajo" n={cnt('bajo')} on={filtro === 'bajo'} c="#ef4444" click={() => { setFiltro('bajo'); if (isMobile) setFiltersOpen(false); }} />
+        <FBtn label="Mejor" range="34.89% a 47.15%" showRange={tip === 'nota_rangos'} n={cnt('alto')} on={filtro === 'alto'} c="#4ade80" click={() => { setFiltro('alto'); if (isMobile) setFiltersOpen(false); }} />
+        <FBtn label="Promedio" range="31.82% a 34.89%" showRange={tip === 'nota_rangos'} n={cnt('medio')} on={filtro === 'medio'} c="#fbbf24" click={() => { setFiltro('medio'); if (isMobile) setFiltersOpen(false); }} />
+        <FBtn label="Bajo" range="18.43% a 31.82%" showRange={tip === 'nota_rangos'} n={cnt('bajo')} on={filtro === 'bajo'} c="#ef4444" click={() => { setFiltro('bajo'); if (isMobile) setFiltersOpen(false); }} />
         <FBtn label="Sin datos" n={cnt('sin_datos')} on={filtro === 'sin_datos'} c="#d1d5db" click={() => { setFiltro('sin_datos'); if (isMobile) setFiltersOpen(false); }} />  
       </div>
 
@@ -451,11 +462,14 @@ function Row({ l, v, ik, a, t }: { l: string; v: string; ik?: string; a?: string
   );
 }
 function Sep() { return <div style={{ height: 8, borderBottom: '2px solid #111827', marginBottom: 12 }} />; }
-function FBtn({ label, n, on, c, click }: { label: string; n: number; on: boolean; c: string; click: () => void }) {
+function FBtn({ label, range, showRange, n, on, c, click }: { label: string; range?: string; showRange?: boolean; n: number; on: boolean; c: string; click: () => void }) {
   return (
     <button onClick={click} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, border: on ? `2px solid ${c}` : '2px solid transparent', backgroundColor: on ? `${c}15` : 'transparent', cursor: 'pointer', width: '100%', fontFamily: "'Space Mono', monospace" }}>
       <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: c }} />
-      <span style={{ fontSize: 12, fontWeight: on ? 700 : 400, color: '#374151', flex: 1, textAlign: 'left' }}>{label}</span>
+      <span style={{ display: 'flex', alignItems: 'baseline', gap: 6, flex: 1, minWidth: 0, textAlign: 'left' }}>
+        <span style={{ fontSize: 12, fontWeight: on ? 700 : 400, color: '#374151' }}>{label}</span>
+        {showRange && range && <span style={{ fontSize: 10, color: '#6b7280', whiteSpace: 'nowrap' }}>{range}</span>}
+      </span>
       <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>{n.toLocaleString()}</span>
     </button>
   );
