@@ -337,6 +337,12 @@ function MapView({ colonias, onColoniaClick, selectedCP, selectionTrigger = 0, o
     if (map.current.getLayer("cdmx-perimeter-fill")) {
       map.current.moveLayer("cdmx-perimeter-fill");
     }
+    if (map.current.getLayer("municipios-fill")) {
+      map.current.moveLayer("municipios-fill");
+    }
+    if (map.current.getLayer("municipios-line")) {
+      map.current.moveLayer("municipios-line");
+    }
 
     let hovId: string | null = null;
 
