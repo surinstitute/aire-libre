@@ -16,6 +16,9 @@ import type { QuizAnswers, BirdProfile } from '../data/quizData';
 import type { Colonia } from '../types';
 
 import BirdResultViewer from '../components/Bird/BirdResultViewer';
+import CuriousFactCard from '../components/CuriousFactCard';
+import { selectCuriousFact } from '../data/curiousFacts';
+import type { CuriousFact, CuriousFactCategory } from '../data/curiousFacts';
 
 // ============================================================
 // Cumplimiento label mapping
@@ -80,7 +83,15 @@ const FadeIn: React.FC<{ children: React.ReactNode; delay?: number }> = ({ child
 // ============================================================
 // SHARE IMAGE GENERATOR — per-slide with matched typography
 // ============================================================
-const SITE_URL = 'https://aire-libre-tawny.vercel.app';
+const SITE_URL = 'https://airelibre.sur.institute';
+const AIR_SUMMARY_NOTE = 'Días limpios: % del año bajo el límite OMS. Calidad: 100% es mejor. No son datos en tiempo real.';
+const AIR_SUMMARY_INDICATORS = [
+  { key: 'dias_aire_limpio_pm25', label: 'Días aire limpio (PM2.5)' },
+  { key: 'concentracion_alta_pm25', label: 'Calidad días malos (PM2.5)' },
+  { key: 'dias_aire_limpio_ozono', label: 'Días aire limpio (Ozono)' },
+  { key: 'concentracion_alta_ozono', label: 'Calidad días malos (Ozono)' },
+  { key: 'subindice_aire', label: 'Calificación general aire' },
+] as const;
 
 function getShareText(bird: BirdProfile): string {
   return `Hice el test de Aire Libre y soy un ${bird.name} 🐦. ¿Cuál eres tú? Descúbrelo en ${SITE_URL}/quiz`;
@@ -117,6 +128,8 @@ interface SlideShareData {
   title: string;
   bigText?: string;
   body: string;
+  factCategory: CuriousFactCategory;
+  curiousFact: CuriousFact;
   badgeText?: string;
   badgeColor?: string;
   birdEmoji?: string;
@@ -125,16 +138,22 @@ interface SlideShareData {
   contextoRaw?: number;
   individuoLabel?: string;
   individuoRaw?: number;
+  airSummary?: { label: string; value: string }[];
 }
+
+type SlideShareContent = Omit<SlideShareData, 'curiousFact'>;
 
 function generateSlideShareImage(data: SlideShareData): Promise<Blob | null> {
   const W = 720;
   const H = 960;
+  const SCALE = 3;
+  const BIRD_SIZE = 280;
   const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
+  canvas.width = W * SCALE;
+  canvas.height = H * SCALE;
   const ctx = canvas.getContext('2d');
   if (!ctx) return Promise.resolve(null);
+  ctx.scale(SCALE, SCALE);
 
   const { palette } = data;
   const dim = `${palette.text}88`;
@@ -144,6 +163,11 @@ function generateSlideShareImage(data: SlideShareData): Promise<Blob | null> {
   ctx.fillStyle = palette.bg;
   roundRect(ctx, 0, 0, W, H, 24);
   ctx.fill();
+
+  const CONTENT_SCALE = 0.84;
+  ctx.save();
+  ctx.translate((W * (1 - CONTENT_SCALE)) / 2, (H * (1 - CONTENT_SCALE)) / 2);
+  ctx.scale(CONTENT_SCALE, CONTENT_SCALE);
 
   // Top accent bar
   ctx.fillStyle = palette.accent;
@@ -156,19 +180,20 @@ function generateSlideShareImage(data: SlideShareData): Promise<Blob | null> {
   ctx.letterSpacing = '4px';
   ctx.fillText('A I R E   L I B R E', W / 2, 72);
 
-  const drawContent = () => {
+  const drawContent = (birdImage?: HTMLImageElement) => {
     let y = 120;
 
     // Bird emoji/image (for slide 1 and final)
     if (data.birdEmoji || data.birdImageUrl) {
       if (data.birdImageUrl) {
-        // Image already drawn before this
+        if (birdImage) ctx.drawImage(birdImage, (W - BIRD_SIZE) / 2, y, BIRD_SIZE, BIRD_SIZE);
+        y += BIRD_SIZE + 20;
       } else if (data.birdEmoji) {
         ctx.font = '64px serif';
         ctx.textAlign = 'center';
         ctx.fillText(data.birdEmoji, W / 2, y + 50);
+        y += 80;
       }
-      y += 80;
     }
 
     // Big text (large number or bird name)
@@ -274,7 +299,61 @@ function generateSlideShareImage(data: SlideShareData): Promise<Blob | null> {
       }
     }
 
-    // Footer
+    if (data.airSummary) {
+      y += 24;
+      ctx.font = 'bold 16px Space Mono, monospace';
+      ctx.fillStyle = palette.accent;
+      ctx.textAlign = 'center';
+      ctx.fillText('Exposición a contaminantes', W / 2, y + 18);
+      y += 36;
+      for (const indicator of data.airSummary) {
+        ctx.font = '14px Space Mono, monospace';
+        ctx.fillStyle = palette.text;
+        ctx.textAlign = 'left';
+        ctx.fillText(indicator.label, 70, y + 18);
+        ctx.font = 'bold 16px Space Mono, monospace';
+        ctx.fillStyle = palette.accent;
+        ctx.textAlign = 'right';
+        ctx.fillText(indicator.value, W - 70, y + 18);
+        y += 32;
+      }
+      y += 12;
+      ctx.font = '12px Space Mono, monospace';
+      ctx.fillStyle = dim;
+      ctx.textAlign = 'center';
+      for (const noteLine of wrapText(ctx, AIR_SUMMARY_NOTE, W - 140)) {
+        ctx.fillText(noteLine, W / 2, y + 16);
+        y += 20;
+      }
+    }
+
+    if (data.curiousFact) {
+      y += 24;
+      ctx.font = 'bold 16px Space Mono, monospace';
+      ctx.fillStyle = palette.accent;
+      ctx.textAlign = 'center';
+      ctx.fillText('¿Sabías que?', W / 2, y + 18);
+      y += 30;
+      ctx.font = '14px Space Mono, monospace';
+      ctx.fillStyle = palette.text;
+      for (const factLine of wrapText(ctx, data.curiousFact.fact, W - 140)) {
+        ctx.fillText(factLine, W / 2, y + 18);
+        y += 22;
+      }
+      y += 10;
+      ctx.font = '11px Space Mono, monospace';
+      ctx.fillStyle = dim;
+      const sourceUrl = new URL(data.curiousFact.source.url, SITE_URL);
+      const sourceText = `Fuente: ${data.curiousFact.source.label} (${sourceUrl.href})`;
+      for (const sourceLine of wrapText(ctx, sourceText, W - 140)) {
+        ctx.fillText(sourceLine, W / 2, y + 14);
+        y += 18;
+      }
+    }
+    return y;
+  };
+
+  const drawFooter = () => {
     const footerY = H - 80;
     ctx.strokeStyle = line;
     ctx.beginPath();
@@ -284,7 +363,7 @@ function generateSlideShareImage(data: SlideShareData): Promise<Blob | null> {
     ctx.font = '12px Space Mono, monospace';
     ctx.fillStyle = `${palette.text}50`;
     ctx.textAlign = 'center';
-    ctx.fillText('aire-libre-tawny.vercel.app/quiz', W / 2, footerY + 24);
+    ctx.fillText('airelibre.sur.institute/quiz', W / 2, footerY + 24);
     ctx.font = 'bold 16px Space Mono, monospace';
     ctx.fillStyle = palette.accent;
     ctx.fillText('¿Cuál eres tú? Haz el test →', W / 2, footerY + 52);
@@ -295,22 +374,38 @@ function generateSlideShareImage(data: SlideShareData): Promise<Blob | null> {
   };
 
   return new Promise((resolve) => {
+    const finishImage = (birdImage?: HTMLImageElement) => {
+      // Measure with an empty clip, then fit long content above the fixed footer.
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, 0, 0);
+      ctx.clip();
+      const contentBottom = drawContent(birdImage);
+      ctx.restore();
+      const fitScale = Math.min(1, (H - 80 - 24 - 120) / (contentBottom - 120));
+      ctx.save();
+      ctx.translate(W / 2, 120);
+      ctx.scale(fitScale, fitScale);
+      ctx.translate(-W / 2, -120);
+      drawContent(birdImage);
+      ctx.restore();
+      drawFooter();
+      ctx.restore();
+      canvas.toBlob((b) => resolve(b), 'image/png', 1.0);
+    };
+
     if (data.birdImageUrl) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        ctx.drawImage(img, W / 2 - 48, 90, 96, 96);
-        drawContent();
-        canvas.toBlob((b) => resolve(b), 'image/png', 1.0);
+        finishImage(img);
       };
       img.onerror = () => {
-        drawContent();
-        canvas.toBlob((b) => resolve(b), 'image/png', 1.0);
+        finishImage();
       };
       img.src = data.birdImageUrl;
     } else {
-      drawContent();
-      canvas.toBlob((b) => resolve(b), 'image/png', 1.0);
+      finishImage();
     }
   });
 }
@@ -419,7 +514,7 @@ const s = (p: Palette) => ({
 interface SlideData {
   palette: Palette;
   content: React.ReactNode;
-  shareData: SlideShareData;
+  shareData: SlideShareContent;
 }
 
 const QuizResult: React.FC = () => {
@@ -427,6 +522,7 @@ const QuizResult: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [selectedFact, setSelectedFact] = useState(() => selectCuriousFact('aves'));
   const birdSnapshotFn = useRef<(() => string | null) | null>(null);
 
   const answers: QuizAnswers = useMemo(() => { try { return JSON.parse(sessionStorage.getItem('quizAnswers') || '{}'); } catch { return {}; } }, []);
@@ -461,9 +557,9 @@ const QuizResult: React.FC = () => {
     navigate(cp ? `/map?cp=${encodeURIComponent(cp)}` : '/map');
   }, [answers, navigate]);
 
-  const shareSlideAsset = useCallback(async (baseShareData: SlideShareData, channel: 'general' | 'instagram' = 'general') => {
+  const shareSlideAsset = useCallback(async (baseShareData: SlideShareContent, channel: 'general' | 'instagram' = 'general') => {
     setShareStatus('Generando imagen...');
-    const shareData = { ...baseShareData };
+    const shareData = { ...baseShareData, curiousFact: selectedFact };
     if (shareData.birdEmoji && birdSnapshotFn.current) {
       shareData.birdImageUrl = birdSnapshotFn.current();
     }
@@ -472,7 +568,7 @@ const QuizResult: React.FC = () => {
     else if (status === 'downloaded') setShareStatus(channel === 'instagram' ? '¡Imagen lista para Instagram!' : '¡Imagen descargada!');
     else setShareStatus('Error al generar imagen');
     setTimeout(() => setShareStatus(null), 3000);
-  }, [result]);
+  }, [result, selectedFact]);
 
   // ── Build slides ──
   const slides: SlideData[] = useMemo(() => {
@@ -493,7 +589,7 @@ const QuizResult: React.FC = () => {
     const p0 = slidePalettes[0];
     out.push({
       palette: p0,
-      shareData: { slideIndex: 0, palette: p0, title: result.bird.name, body: result.bird.narrative, birdEmoji: result.bird.emoji },
+      shareData: { slideIndex: 0, palette: p0, title: result.bird.name, body: result.bird.narrative, birdEmoji: result.bird.emoji, factCategory: 'aves' },
       content: (
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}>
@@ -513,9 +609,15 @@ const QuizResult: React.FC = () => {
 
     // 2 — Código postal
     const p1 = COMPLIANCE_PALETTES[cpRiskLevel] ?? slidePalettes[1];
+    const airSummary = colonia ? AIR_SUMMARY_INDICATORS.map(({ key, label }) => ({
+      label,
+      value: colonia.categoria_riesgo !== 'sin_datos' && typeof colonia[key] === 'number' && Number.isFinite(colonia[key])
+        ? `${(colonia[key] * 100).toFixed(1)}%`
+        : 'N/D',
+    })) : undefined;
     out.push({
       palette: p1,
-      shareData: { slideIndex: 1, palette: p1, title: `CP ${answers.codigoPostal || '—'}`, bigText: String(answers.codigoPostal || '—'), body: colonia ? `Vives en ${colonia.colonias}, ${colonia.municipio}. ${cumplDesc}` : cumplLabel, badgeText: cumplLabel, badgeColor: cumplColor },
+      shareData: { slideIndex: 1, palette: p1, title: 'Tu código postal', bigText: String(answers.codigoPostal || '—'), body: colonia ? `Vives en ${colonia.colonias}, ${colonia.municipio}. ${cumplDesc}` : cumplLabel, badgeText: cumplLabel, badgeColor: cumplColor, airSummary, factCategory: 'entorno' },
       content: (
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}>
@@ -528,6 +630,20 @@ const QuizResult: React.FC = () => {
                 <p style={s(p1).body}>Vives en <span style={{ color: cumplColor, fontWeight: 700 }}>{colonia.colonias}, {colonia.municipio}</span>.</p>
                 <div style={{ display: 'inline-block', marginTop: '16px', padding: '8px 20px', borderRadius: '6px', backgroundColor: cumplColor, color: '#1C2333', fontWeight: 700, fontSize: '14px', letterSpacing: '0.5px' }}>{cumplLabel}</div>
                 <p style={{ ...s(p1).body, marginTop: '16px', fontSize: '13px', opacity: 0.7 }}>{cumplDesc}</p>
+                {airSummary && (
+                  <section style={{ width: '100%', maxWidth: '480px', margin: '20px auto 0', textAlign: 'left', borderTop: `1px solid ${p1.text}30`, paddingTop: '16px' }}>
+                    <h2 style={{ fontSize: '13px', fontWeight: 700, color: p1.accent, margin: '0 0 12px' }}>Exposición a contaminantes</h2>
+                    <dl style={{ margin: 0 }}>
+                      {airSummary.map(({ label, value }) => (
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', padding: '7px 0', borderBottom: `1px solid ${p1.text}20`, fontSize: '12px' }}>
+                          <dt>{label}</dt>
+                          <dd style={{ margin: 0, flexShrink: 0, fontWeight: 700, color: p1.accent }}>{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p style={{ margin: '12px 0 0', fontSize: '10px', lineHeight: 1.6, opacity: 0.7 }}>{AIR_SUMMARY_NOTE}</p>
+                  </section>
+                )}
               </div>
             ) : (
               <div><div style={{ display: 'inline-block', marginTop: '8px', padding: '8px 20px', borderRadius: '6px', backgroundColor: cumplColor, color: '#1C2333', fontWeight: 700, fontSize: '14px' }}>{cumplLabel}</div></div>
@@ -546,7 +662,7 @@ const QuizResult: React.FC = () => {
       });
       out.push({
         palette: p2,
-        shareData: { slideIndex: 2, palette: p2, title: 'Litros de aire diarios', bigText: dailyAir.toLocaleString(), body: `Eso pesa aproximadamente ${dailyAirKgLabel} kg de aire. La calidad de ese aire importa más de lo que crees.` },
+        shareData: { slideIndex: 2, palette: p2, title: 'Litros de aire diarios', bigText: dailyAir.toLocaleString(), body: `Eso pesa aproximadamente ${dailyAirKgLabel} kg de aire. La calidad de ese aire importa más de lo que crees.`, factCategory: 'aire' },
         content: (
           <div style={{ textAlign: 'center' }}>
             <FadeIn delay={200}>
@@ -567,7 +683,7 @@ const QuizResult: React.FC = () => {
     const edadBody = isSensitive ? (answers.edad === 'menor12' ? 'Las personas menores de 12 años están en desarrollo y necesitan más aire limpio. Sus pulmones son más vulnerables a los contaminantes.' : 'Las personas mayores de 65 años tienen más afectaciones por la contaminación del aire. El cuidado preventivo es especialmente importante.') : 'Tu rango de edad no presenta una vulnerabilidad biológica elevada, pero el cuidado del aire te beneficia igual.';
     out.push({
       palette: p3,
-      shareData: { slideIndex: 3, palette: p3, title: edadLabel, body: edadBody },
+      shareData: { slideIndex: 3, palette: p3, title: edadLabel, body: edadBody, factCategory: 'edad' },
       content: (
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}><div style={s(p3).title}>{edadLabel}</div></FadeIn>
@@ -582,7 +698,7 @@ const QuizResult: React.FC = () => {
     const fumaBody = fumaVal === 'fuma' ? 'Las personas que fuman tienen hasta 3 veces más riesgo de afectaciones por la calidad del aire.' : fumaVal === 'exfumador' ? 'Haber dejado de fumar es un gran paso. Tu cuerpo se está recuperando.' : 'No fumar reduce significativamente tu riesgo. Tienes hasta 3 veces menos riesgo.';
     out.push({
       palette: p4,
-      shareData: { slideIndex: 4, palette: p4, title: fumaTitle, body: fumaBody },
+      shareData: { slideIndex: 4, palette: p4, title: fumaTitle, body: fumaBody, factCategory: 'tabaco' },
       content: (
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}><div style={s(p4).title}>{fumaTitle}</div></FadeIn>
@@ -597,7 +713,7 @@ const QuizResult: React.FC = () => {
     const ejBody = ejVal === '2omas' ? '¡Tu capacidad pulmonar y salud general son mejores! Intenta hacerlo en horarios con mejor calidad del aire.' : ejVal === 'aveces' ? 'Algo de ejercicio es mejor que nada. Mover el cuerpo fortalece tus pulmones.' : 'El ejercicio regular mejora tu capacidad pulmonar. Incluso caminatas cortas cuentan.';
     out.push({
       palette: p5,
-      shareData: { slideIndex: 5, palette: p5, title: ejTitle, body: ejBody },
+      shareData: { slideIndex: 5, palette: p5, title: ejTitle, body: ejBody, factCategory: 'actividad-fisica' },
       content: (
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}><div style={s(p5).title}>{ejTitle}</div></FadeIn>
@@ -612,7 +728,7 @@ const QuizResult: React.FC = () => {
     const condBody = hasConds ? `Reportaste: ${conds.map((c) => getLabel('condicionesSalud', c)).join(', ')}. Estas condiciones pueden hacer que tu cuerpo sea más sensible a la contaminación.` : 'No reportas condiciones preexistentes. Mantener hábitos saludables es la mejor forma de protegerte.';
     out.push({
       palette: p6,
-      shareData: { slideIndex: 6, palette: p6, title: condTitle, body: condBody },
+      shareData: { slideIndex: 6, palette: p6, title: condTitle, body: condBody, factCategory: 'salud' },
       content: (
         <div style={{ textAlign: 'center' }}>
           <FadeIn delay={200}><div style={s(p6).title}>{condTitle}</div></FadeIn>
@@ -632,11 +748,12 @@ const QuizResult: React.FC = () => {
 
     // 8 — FINAL
     const pF = slidePalettes[7];
-    const finalShareData: SlideShareData = {
+    const finalShareData: SlideShareContent = {
       slideIndex: 7,
       palette: pF,
       title: result.bird.name,
       body: 'Ante la crisis de aire, NO TE QUEDES EN LAS NUBES. Sal y construyamos un cambio.',
+      factCategory: 'derechos',
       birdEmoji: result.bird.emoji,
       contextoLabel,
       contextoRaw: result.contexto.raw,
@@ -722,7 +839,14 @@ const QuizResult: React.FC = () => {
   }, [answers, result, dailyAir, dailyAirKg, cpRiskLevel, colonia, goToMap, shareSlideAsset]);
 
   const total = slides.length;
-  const goTo = useCallback((i: number) => { if (i >= 0 && i < total) { setCurrentSlide(i); setAnimKey((k) => k + 1); setShareStatus(null); } }, [total]);
+  const goTo = useCallback((i: number) => {
+    if (i >= 0 && i < total && i !== currentSlide) {
+      setSelectedFact(selectCuriousFact(slides[i].shareData.factCategory));
+      setCurrentSlide(i);
+      setAnimKey((k) => k + 1);
+      setShareStatus(null);
+    }
+  }, [currentSlide, slides, total]);
 
   // ── Share handler (per-slide) ──
   const handleShareSlide = useCallback(async () => {
@@ -766,6 +890,7 @@ const QuizResult: React.FC = () => {
 
       <div key={`s-${currentSlide}-${animKey}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: '600px' }}>
         {slide.content}
+        <CuriousFactCard fact={selectedFact} textColor={palette.text} accentColor={palette.accent} />
       </div>
 
       {/* Share button — part of flow, below content */}

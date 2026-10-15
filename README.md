@@ -5,7 +5,7 @@
 **Plataforma de visualización de calidad del aire y equidad ambiental**
 **para la Zona Metropolitana del Valle de México**
 
-[![Vercel](https://img.shields.io/badge/deploy-Vercel-000?logo=vercel&logoColor=white)](https://aire-libre-tawny.vercel.app)
+[![Vercel](https://img.shields.io/badge/deploy-Vercel-000?logo=vercel&logoColor=white)](https://airelibre.sur.institute)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
@@ -13,7 +13,7 @@
 [![Mapbox](https://img.shields.io/badge/Mapbox-GL_JS-4264FB?logo=mapbox&logoColor=white)](https://mapbox.com)
 [![Three.js](https://img.shields.io/badge/Three.js-3D-000?logo=threedotjs&logoColor=white)](https://threejs.org)
 
-[Ver en vivo](https://aire-libre-tawny.vercel.app) · [Reportar bug](https://github.com/surinstitute/aire-libre/issues) · [Solicitar feature](https://github.com/surinstitute/aire-libre/issues)
+[Ver en vivo](https://airelibre.sur.institute) · [Reportar bug](https://github.com/surinstitute/aire-libre/issues) · [Solicitar feature](https://github.com/surinstitute/aire-libre/issues)
 
 </div>
 
@@ -62,6 +62,7 @@ Desarrollado para el [Instituto del Sur Urbano](https://sur.institute) en colabo
 - Scoring en 2 ejes: **Contexto** (morado) e **Individuo** (rosa)
 - Matriz 3×3 que asigna 1 de 5 perfiles de pájaro según la combinación de ejes
 - Resultados estilo **Spotify Wrapped**: 8 slides con datos personalizados, animaciones y paletas de color únicas
+- Cada pantalla elige al azar un «¿Sabías que?» de su categoría al entrar; se mantiene al compartir y se vuelve a seleccionar al visitar otra pantalla
 
 ### Perfiles de Pájaro
 | Perfil | Contexto | Individuo | Significado |
@@ -75,8 +76,19 @@ Desarrollado para el [Instituto del Sur Urbano](https://sur.institute) en colabo
 ### Compartir resultados
 - Generación de imagen por slide con Canvas API
 - Tarjetas con la paleta de colores y tipografía de cada slide
+- El mismo dato curioso y su fuente se incluyen en el PNG; el contenido se ajusta para respetar los márgenes y no invadir el pie de la tarjeta
 - Compartir vía Web Share API (mobile), Twitter y Facebook
 - Descarga directa como PNG
+
+#### Configurar datos curiosos
+
+El catálogo está en [`src/data/curiousFacts.ts`](src/data/curiousFacts.ts). Cada entrada contiene `category`, `fact` y `source` (`label` y `url`). Las fuentes actuales enlazan al contenido educativo del sitio; también se pueden configurar enlaces externos.
+
+Las categorías de resultados son: `aves` (presentación del pájaro), `entorno` (código postal), `aire` (aire diario), `edad`, `tabaco`, `actividad-fisica`, `salud` (condiciones preexistentes) y `derechos` (resultado final). El campo `factCategory` de cada slide en [`QuizResult.tsx`](src/pages/QuizResult.tsx) determina qué entradas puede mostrar, incluso cuando se omite la pantalla de aire diario.
+
+[`CuriousFactCard`](src/components/CuriousFactCard.tsx) es el componente reutilizable. Recibe el registro seleccionado en `fact` y los colores `textColor` y `accentColor`; admite `className` y `style`. Para usarlo en otro lugar, selecciona un registro con `selectCuriousFact(category)` al entrar y conserva ese registro en el estado del componente padre. No selecciones otro al compartir.
+
+Validación del catálogo y componente: `bun test tests/curiousFacts.test.tsx`.
 
 ### Preguntas Relacionadas (FAQ)
 - 14 preguntas frecuentes en formato acordeón
@@ -442,7 +454,7 @@ En Vercel → Settings → Environment Variables, agregar:
 
 ## Datos abiertos
 
-Los datos del proyecto están disponibles para descarga en la página de [Recursos](https://aire-libre-tawny.vercel.app/resources):
+Los datos del proyecto están disponibles para descarga en la página de [Recursos](https://airelibre.sur.institute/resources):
 
 | Formato | Contenido | Tamaño |
 |---------|-----------|--------|

@@ -157,8 +157,15 @@ export default function AnimatedBirdViewer({
         // Snapshot function
         if (onReady) {
           onReady(() => {
-            renderer.render(scene, camera);
-            return renderer.domElement.toDataURL('image/png');
+            const pixelRatio = renderer.getPixelRatio();
+            try {
+              renderer.setPixelRatio(Math.max(pixelRatio, 840 / Math.min(w, h)));
+              renderer.render(scene, camera);
+              return renderer.domElement.toDataURL('image/png');
+            } finally {
+              renderer.setPixelRatio(pixelRatio);
+              renderer.render(scene, camera);
+            }
           });
         }
 
